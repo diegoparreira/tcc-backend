@@ -84,7 +84,7 @@ const User = sequelize.define('User', {
   }
 });
 
-const createData = async () => {
+const createUserData = async () => {
   await User.bulkCreate(_USERS)
   .then(users => {
     console.log('Successful created data');
@@ -95,4 +95,4 @@ const createData = async () => {
   });
 }
 
-module.exports = {User, createData};
+module.exports = {User, createUserData};
