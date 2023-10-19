@@ -1,6 +1,8 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../../config/database');
-const {Content} = require('./Content');
+const { Content } = require('./Content');
+const { ExtraDoc } = require('./ExtraDoc');
+const { Comments } = require('./Comments');
 
 const _USERS = require('../../data/users.json');
 
@@ -80,7 +82,13 @@ const User = sequelize.define('User', {
 });
 
 User.hasMany(Content);
+User.hasMany(ExtraDoc);
+User.hasMany(Comments);
 Content.belongsTo(User);
+Content.hasMany(Comments);
+ExtraDoc.belongsTo(User);
+Comments.belongsTo(User);
+Comments.belongsTo(Content);
 
 const createUserData = async () => {
   await User.bulkCreate(_USERS)
