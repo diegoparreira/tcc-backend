@@ -55,8 +55,8 @@ const init = async () => {
 
       console.log('Sync and associations with success');
 
-      User.create(simpleUser);
-      Content.create(simpleContent);
+      // User.create(simpleUser);
+      // Content.create(simpleContent);
     }catch(err){
       console.log('Error at sync and associate: ' + err);
     }
