@@ -1,13 +1,14 @@
 const express = require('express');
 const userRouter = express.Router();
 const bcrypt = require('bcrypt');
-const User = require('../models/User');
+const {User} = require('../models/User');
 
 
 // Listar todos os usuários
 userRouter.get('/', async (req, res) => {
   try {
-    const users = await User.find();
+    // const users = await User.findAll();
+    const users = await User.findAll();
     res.json(users);
   } catch (error) {
     console.error(error);
@@ -15,11 +16,15 @@ userRouter.get('/', async (req, res) => {
   }
 });
 
-// Obter um usuário por ID
-userRouter.get('/:id', async (req, res) => {
-  const { id } = req.params;
+// Obter um usuário por email
+userRouter.get('/:email', async (req, res) => {
+  const { email } = req.params;
   try {
-    const user = await User.findById(id);
+    const user = await User.findAll({
+      where: {
+        email: email
+      }
+    });
     if (!user) {
       res.status(404).json({ error: 'Usuário não encontrado.' });
       return;
@@ -40,12 +45,12 @@ userRouter.post('/', async (req, res) => {
     
     // Cria o usuário com a senha hash
     const newUser = new User({
-      name: body.name,
+      firstName: body.firstName,
+      lastName: body.lastName,
       email: body.email,
       username: body.username,
-      password: hashedPassword,
-      birthdate: body.birthdate,
-      userType: body.userType,
+      password_hash: hashedPassword,
+      birthdate: body.birthdate
     });
 
     await newUser.save();
@@ -56,12 +61,18 @@ userRouter.post('/', async (req, res) => {
   }
 });
 
-// Atualizar um usuário por ID
-userRouter.put('/:id', async (req, res) => {
-  const { id } = req.params;
+// Atualizar um usuário por email
+// Corrigir para só alterar os campos que devem permitir alteração
+userRouter.put('/:email', async (req, res) => {
+  const { email } = req.params;
   const { body } = req;
   try {
-    const user = await User.findById(id);
+    // const user = await User.findById(id);
+    const user = await User.findAll({
+      where: {
+        email: email
+      }
+    });
     if (!user) {
       res.status(404).json({ error: 'Usuário não encontrado.' });
       return;
@@ -70,32 +81,24 @@ userRouter.put('/:id', async (req, res) => {
     // Calcula o hash da nova senha, se estiver presente
     const newPassword = body.password;
     if (newPassword) {
-      newPassword = await bcrypt.hash(newPassword, 10);
+      body.password = await bcrypt.hash(newPassword, 10);
     }
-
-    await User.findByIdAndUpdate(id, body);
-    res.json({ message: 'Usuário atualizado com sucesso.' });
+    await User.update(body, {
+      where: {
+        email: email
+      }
+    })
+    .then((result) => {
+      if(result[0] > 0) {
+        res.status(200).json({ message: 'Usuário atualizado com sucesso.' });
+      }
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Erro ao atualizar usuário.' });
   }
 });
 
-// Deletar um usuário por ID
-userRouter.delete('/:id', async (req, res) => {
-  const { id } = req.params;
-  try {
-    const usuarioExistente = await User.findById(id);
-    if (!usuarioExistente) {
-      res.status(404).json({ error: 'Usuário não encontrado.' });
-      return;
-    }
-    await User.findByIdAndDelete(id);
-    res.json({ message: 'Usuário deletado com sucesso.' });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Erro ao deletar usuário.' });
-  }
-});
+// TODO: Alterar tipo de usuário
 
 module.exports = {userRouter};

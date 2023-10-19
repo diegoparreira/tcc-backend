@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../../config/database');
+const {Content} = require('./Content');
 
 const _USERS = require('../../data/users.json');
 
@@ -43,13 +44,7 @@ const User = sequelize.define('User', {
   },
   password_hash: {
     type: DataTypes.STRING,
-    allowNull: false,
-    validate: {
-      isAlphanumeric: {
-        args: true,
-        msg: "Error: enter a alphanumeric password."
-      }
-    }
+    allowNull: false
   },
   birthdate: {
     type: DataTypes.DATE,
@@ -71,7 +66,7 @@ const User = sequelize.define('User', {
       console.log('Entrou no hook do create');
       console.log(user.firstName);
       console.log(user.lastName);
-      user.fullName = `${user.firstName} + ${user.lastName}`;
+      user.fullName = `${user.firstName} ${user.lastName}`;
     },
     beforeBulkCreate: (users) => {
       console.log('Entrou no hook do create');
@@ -83,6 +78,9 @@ const User = sequelize.define('User', {
     }
   }
 });
+
+User.hasMany(Content);
+Content.belongsTo(User);
 
 const createUserData = async () => {
   await User.bulkCreate(_USERS)
