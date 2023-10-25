@@ -2,7 +2,9 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../../config/database');
 const { Content } = require('./Content');
 const { ExtraDoc } = require('./ExtraDoc');
-const { Comments } = require('./Comments');
+const { Comment } = require('./Comment');
+const { Answer } = require('./Answer');
+const { Category } = require('./Category');
 
 const _USERS = require('../../data/users.json');
 
@@ -31,8 +33,9 @@ const User = sequelize.define('User', {
     }
   },
   email: {
-    type: DataTypes.STRING,
+    type: DataTypes.STRING(50),
     allowNull: false,
+    unique: true,
     validate: {
       isEmail: {
         args: true,
@@ -41,8 +44,9 @@ const User = sequelize.define('User', {
     }
   },
   username: {
-    type: DataTypes.STRING,
+    type: DataTypes.STRING(50),
     allowNull: false,
+    unique: true,
   },
   password_hash: {
     type: DataTypes.STRING,
@@ -83,12 +87,26 @@ const User = sequelize.define('User', {
 
 User.hasMany(Content);
 User.hasMany(ExtraDoc);
-User.hasMany(Comments);
+User.hasMany(Comment);
+User.hasMany(Answer);
+User.hasMany(Category);
+
 Content.belongsTo(User);
-Content.hasMany(Comments);
+Content.belongsTo(Category);
+Content.hasMany(Comment);
+Content.hasMany(ExtraDoc);
+
 ExtraDoc.belongsTo(User);
-Comments.belongsTo(User);
-Comments.belongsTo(Content);
+
+Comment.belongsTo(User);
+Comment.belongsTo(Content);
+Comment.hasMany(Answer);
+
+Answer.belongsTo(User);
+Answer.belongsTo(Comment);
+
+Category.belongsTo(User);
+Category.hasMany(Content);
 
 const createUserData = async () => {
   await User.bulkCreate(_USERS)

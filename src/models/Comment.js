@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../../config/database');
 
-const Comments = sequelize.define('Comments', {
+const Comment = sequelize.define('Comment', {
     content: {
         type: DataTypes.TEXT
     },
@@ -11,4 +11,4 @@ const Comments = sequelize.define('Comments', {
     }
 });
 
-module.exports = { Comments };
+module.exports = { Comment };

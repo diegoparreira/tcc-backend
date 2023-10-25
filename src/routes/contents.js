@@ -1,12 +1,12 @@
 const express = require('express');
 const contentRouter = express.Router();
-const Conteudo = require('../models/Content'); // Supondo que você tenha um modelo Conteudo.
+const Content = require('../models/Content'); 
 
 // Listar todos os conteúdos
 contentRouter.get('/', async (req, res) => {
   try {
-    const conteudos = await Conteudo.find();
-    res.json(conteudos);
+    const content = await Content.findAll();
+    res.json(content);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Erro ao buscar conteúdos.' });
@@ -21,6 +21,20 @@ contentRouter.get('/:id', async (req, res) => {
 // Criar um novo conteúdo
 contentRouter.post('/', async (req, res) => {
   // Implemente a criação de conteúdo aqui
+  const { body } = req.body;
+
+  try{
+    const newContent = await Content.create({
+      title: body.title,
+      description: body.description,
+      url: body.url,
+      type: body.type,
+      UserId: body.userId,
+      CategoryId: body.categoryId
+    });
+
+    res.status(201).json(newContent);
+  }
 });
 
 // Atualizar um conteúdo por ID

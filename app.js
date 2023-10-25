@@ -29,8 +29,8 @@ const init = async () => {
     await sequelize.authenticate(); // Verifique a conexão com o banco de dados
 
     await sequelize
-      // .sync({ force: true })
-      .sync()
+      .sync({ force: true })
+      // .sync()
       .then(() => {
         // Inicialize o servidor
         const port = process.env.PORT || 3000;

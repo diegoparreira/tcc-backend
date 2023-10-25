@@ -1,18 +1,18 @@
 const express = require('express');
 const userRouter = express.Router();
-const bcrypt = require('bcrypt');
-const {User} = require('../models/User');
-
+const userController = require('../controllers/userController');
+const { handleResponse, handleError } = require('../util/util');
 
 // Listar todos os usuários
 userRouter.get('/', async (req, res) => {
   try {
-    // const users = await User.findAll();
-    const users = await User.findAll();
-    res.json(users);
+    const users = await userController.findAllUsers();
+    res.status(200).json(users);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Erro ao buscar usuários.' });
+    const { sqlMessage, code } = error.parent;
+
+    res.status(500).json(handleError('ERROR', sqlMessage, code));
+    return;
   }
 });
 
@@ -20,85 +20,225 @@ userRouter.get('/', async (req, res) => {
 userRouter.get('/:email', async (req, res) => {
   const { email } = req.params;
   try {
-    const user = await User.findAll({
-      where: {
-        email: email
-      }
-    });
+    const user = await userController.findUserByEmail(email);
     if (!user) {
-      res.status(404).json({ error: 'Usuário não encontrado.' });
+      res.status(404).json(handleResponse('NOT_FOUND'));
       return;
     }
-    res.json(user);
+    res.status(200).json(user);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Erro ao buscar usuário.' });
+    const { sqlMessage, code } = error.parent;
+
+    res.status(500).json(handleError('ERROR', sqlMessage, code));
+    return;
   }
 });
 
 // Criar um novo usuário
 userRouter.post('/', async (req, res) => {
   const { body } = req;
-  try {
-    // Calcula o hash da senha
-    const hashedPassword = await bcrypt.hash(body.password, 10);
-    
-    // Cria o usuário com a senha hash
-    const newUser = new User({
-      firstName: body.firstName,
-      lastName: body.lastName,
-      email: body.email,
-      username: body.username,
-      password_hash: hashedPassword,
-      birthdate: body.birthdate
-    });
+  const { email } = body;
 
-    await newUser.save();
-    res.status(201).json(newUser);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Erro ao criar usuário.' });
-  }
-});
-
-// Atualizar um usuário por email
-// Corrigir para só alterar os campos que devem permitir alteração
-userRouter.put('/:email', async (req, res) => {
-  const { email } = req.params;
-  const { body } = req;
   try {
-    // const user = await User.findById(id);
-    const user = await User.findAll({
-      where: {
-        email: email
-      }
-    });
-    if (!user) {
-      res.status(404).json({ error: 'Usuário não encontrado.' });
+    // Verifica se o usuário já existe
+    const user = await userController.findUserByEmail(email);
+
+    console.log(user);
+
+    if(user.length !== 0){
+      res.status(400).json(handleResponse('EXISTENT_USER'));
       return;
     }
-    
-    // Calcula o hash da nova senha, se estiver presente
-    const newPassword = body.password;
-    if (newPassword) {
-      body.password = await bcrypt.hash(newPassword, 10);
-    }
-    await User.update(body, {
-      where: {
-        email: email
-      }
-    })
-    .then((result) => {
-      if(result[0] > 0) {
-        res.status(200).json({ message: 'Usuário atualizado com sucesso.' });
-      }
-    });
+
+    const newUser = await userController.createUser(body);
+
+    res.status(201).json(newUser);
+
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Erro ao atualizar usuário.' });
+
+    const { sqlMessage, code } = error.parent;
+
+    res.status(500).json(handleError('ERROR', sqlMessage, code));
+    return;
   }
 });
 
-// TODO: Alterar tipo de usuário
+userRouter.put('/password', async (req, res) => {
+  const { body } = req;
+  const { email, password } = body;
+
+  if(!password){
+    res.status(400).json(handleResponse('MISSNG_PASSWORD'));
+    return;
+  }
+
+  if(!email){
+    res.status(400).json(handleResponse('MISSNG_EMAIL'));
+    return;
+  }
+
+  try {
+    const user = await userController.findUserByEmail(email);
+
+    console.log('Usuário encontrado: ' + user[0]);
+
+    if(user.length === 0){
+      res.status(400).json(handleResponse('NOT_FOUND'));
+      return;
+    }
+
+    const result = await userController.updateUserPassword(user[0], password);
+
+    console.log('result');
+    console.log(result);
+        
+    if(result) {
+      res.status(200).json(handleResponse('SUCCESS'));
+      return;
+    }
+
+  } catch (error) {
+    const { sqlMessage, code } = error.parent;
+
+    res.status(500).json(handleError('ERROR', sqlMessage, code));
+    return;
+  }
+});
+
+userRouter.put('/email', async (req, res) => {
+  const { body } = req;
+  const { email, newEmail } = body;
+
+  if(!newEmail){
+    res.status(400).json(handleResponse('MISSING_EMAIL'));
+    return;
+  }
+
+  if(!email){
+    res.status(400).json(handleResponse('MISSING_EMAIL'));
+    return;
+  }
+
+  try {
+    const user = await userController.findUserByEmail(email);
+    const anotherUserWithNewEmail = await userController.findUserByEmail(newEmail);
+
+    // Check if has some user with the current email
+    if(user.length === 0){
+      res.status(400).json(handleResponse('NOT_FOUND'));
+      return;
+    }
+
+    // Check if has some user with the new email
+    if(anotherUserWithNewEmail.length !== 0) {
+      res.status(400).json(handleResponse('EXISTENT_USER'));
+      return;
+    }
+
+    const result = await userController.updateUserEmail(user[0], newEmail);
+
+       
+    if(result) {
+      res.status(200).json(handleResponse('SUCCESS'));
+      return;
+    }
+
+  } catch (error) {
+    const { sqlMessage, code } = error.parent;
+
+    res.status(500).json(handleError('ERROR', sqlMessage, code));
+    return;
+  }
+});
+
+userRouter.put('/username', async (req, res) => {
+  const { body } = req;
+  const { username, newUsername } = body;
+
+  if(!newUsername){
+    res.status(400).json(handleResponse('MISSING_USERNAME'));
+    return;
+  }
+
+  if(!username){
+    res.status(400).json(handleResponse('MISSING_USERNAME'));
+    return;
+  }
+
+  try {
+    const user = await userController.findUserByUsername(username);
+    const anotherUserWithNewUsername = await userController.findUserByUsername(newUsername);
+
+    // Check if has some user with the current email
+    if(user.length === 0){
+      res.status(400).json(handleResponse('NOT_FOUND'));
+      return;
+    }
+
+    // Check if has some user with the new email
+    if(anotherUserWithNewUsername.length !== 0) {
+      res.status(400).json(handleResponse('EXISTENT_USER'));
+     return;
+    }
+
+    const result = await userController.updateUserUsername(user[0], newUsername);
+        
+    if(result) {
+      res.status(200).json(handleResponse('SUCCESS'));
+      return;
+    }
+
+  } catch (error) {
+    const { sqlMessage, code } = error.parent;
+
+    res.status(500).json(handleError('ERROR', sqlMessage, code));
+    return;
+  }
+});
+
+userRouter.post('/type', async (req, res) => {
+  const { body } = req;
+  const { email, type } = body;
+
+  const possibleTypes = ['admin', 'mentor', 'student'];
+
+  try{
+    if(!email){
+      res.status(400).json(handleResponse('MISSING_EMAIL'))
+      return;
+    }
+  
+    if(!type){
+      res.status(400).json(handleResponse('MISSING_TYPE'));
+      return;
+    }
+  
+    if(!possibleTypes.includes(type)){
+      res.status(400).json(handleResponse('ENUM_ERROR'));
+      return;
+    }
+  
+    const user = await userController.findUserByEmail(email);
+    console.log(user);
+  
+    if(!user[0]){
+      res.status(400).json(handleResponse('NOT_FOUND'));
+      return;
+    }
+  
+    const result = await userController.updateUserType(user[0], type);
+  
+    if(result){
+      res.status(200).json(handleResponse('SUCCESS'));
+      return;
+    }
+  }catch(error){
+    const { sqlMessage, code } = error.parent;
+
+    res.status(500).json(handleError('ERROR', sqlMessage, code));
+    return;
+  }
+
+});
 
 module.exports = {userRouter};
