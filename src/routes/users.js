@@ -241,4 +241,4 @@ userRouter.post('/type', async (req, res) => {
 
 });
 
-module.exports = {userRouter};
+module.exports = userRouter;

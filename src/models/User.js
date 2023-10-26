@@ -85,28 +85,28 @@ const User = sequelize.define('User', {
   }
 });
 
-User.hasMany(Content);
-User.hasMany(ExtraDoc);
-User.hasMany(Comment);
-User.hasMany(Answer);
-User.hasMany(Category);
+User.hasMany(Content, {onDelete: 'cascade'});
+User.hasMany(ExtraDoc, {onDelete: 'cascade'});
+User.hasMany(Comment, {onDelete: 'cascade'});
+User.hasMany(Answer, {onDelete: 'cascade'});
+User.hasMany(Category, {onDelete: 'cascade'});
 
 Content.belongsTo(User);
 Content.belongsTo(Category);
-Content.hasMany(Comment);
-Content.hasMany(ExtraDoc);
+Content.hasMany(Comment, {onDelete: 'cascade'});
+Content.hasMany(ExtraDoc, {onDelete: 'cascade'});
 
 ExtraDoc.belongsTo(User);
 
 Comment.belongsTo(User);
 Comment.belongsTo(Content);
-Comment.hasMany(Answer);
+Comment.hasMany(Answer, {onDelete: 'cascade'});
 
 Answer.belongsTo(User);
 Answer.belongsTo(Comment);
 
 Category.belongsTo(User);
-Category.hasMany(Content);
+Category.hasMany(Content, {onDelete: 'cascade'});
 
 const createUserData = async () => {
   await User.bulkCreate(_USERS)

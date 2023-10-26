@@ -5,6 +5,10 @@ const hashPassword = async (password) =>{
     return await bcrypt.hash(password, 10);
 }
 
+const findUserById = async (id) => {
+    return await User.findByPk(id);
+}
+
 const findAllUsers = async () => {
     return await User.findAll();
 }
@@ -80,6 +84,7 @@ const updateUserType = async (user, type) => {
 }
 
 module.exports = { 
+    findUserById,
     findAllUsers, 
     findUserByEmail, 
     findUserByUsername,

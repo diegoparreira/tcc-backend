@@ -2,24 +2,27 @@ const express = require('express');
 const app = express();
 const sequelize = require('./config/database');
 
-const { createUserData } = require('./src/models/User')
-const { createContentData } = require('./src/models/Content')
+const { createUserData } = require('./src/models/User');
+const { createContentData } = require('./src/models/Content');
 
 // Importe as classes CRUD para as tabelas aqui
-const {userRouter} = require('./src/routes/users');
-// const conteudosRouter = require('./routes/contents');
-// const comentariosRouter = require('./routes/comments');
-// const materiaisRouter = require('./routes/materials');
-// const categoriasRouter = require('./routes/categories');
+const userRouter = require('./src/routes/users');
+const contentRouter = require('./src/routes/contents');
+const categoryRouter = require('./src/routes/categories');
+const extraDocRouter = require('./src/routes/extraDocs');
+const commentRouter = require('./src/routes/comments');
+const answerRouter = require('./src/routes/answers');
 
+// Permitir a utilização de JSON nas requisições
 app.use(express.json());
 
 // Defina as rotas principais do aplicativo
 app.use('/users', userRouter);
-// app.use('/contents', conteudosRouter);
-// app.use('/comments', comentariosRouter);
-// app.use('/materials', materiaisRouter);
-// app.use('/categories', categoriasRouter);
+app.use('/contents', contentRouter);
+app.use('/categories', categoryRouter);
+app.use('/extradocs', extraDocRouter);
+app.use('/comments', commentRouter);
+app.use('/answers', answerRouter);
 
 // Outras configurações e middleware do Express
 
@@ -29,8 +32,8 @@ const init = async () => {
     await sequelize.authenticate(); // Verifique a conexão com o banco de dados
 
     await sequelize
-      .sync({ force: true })
-      // .sync()
+      // .sync({ force: true })
+      .sync()
       .then(() => {
         // Inicialize o servidor
         const port = process.env.PORT || 3000;
