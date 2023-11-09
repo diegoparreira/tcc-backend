@@ -1,5 +1,6 @@
 const express = require('express');
 const app = express();
+const cors = require('cors');
 const sequelize = require('./config/database');
 
 const { createUserData } = require('./src/models/User');
@@ -15,6 +16,9 @@ const answerRouter = require('./src/routes/answers');
 
 // Permitir a utilização de JSON nas requisições
 app.use(express.json());
+app.use(cors({
+  origin: 'http://localhost:3000',
+}));
 
 // Defina as rotas principais do aplicativo
 app.use('/users', userRouter);
@@ -36,7 +40,7 @@ const init = async () => {
       .sync()
       .then(() => {
         // Inicialize o servidor
-        const port = process.env.PORT || 3000;
+        const port = process.env.PORT || 3003;
 
         app.listen(port, () => {
           console.log(`Running server at port: ${port}`);

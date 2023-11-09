@@ -16,6 +16,19 @@ contentRouter.get('/', async (req, res) => {
   }
 });
 
+// Listar conteúdos por categoria
+contentRouter.get('/bycategories', async (req, res) => {
+  try{
+    const contents = await contentController.getContentGroupByCategories();
+    res.status(200).json(contents);
+  }catch(error){
+    const { sqlMessage, code } = error.parent;
+
+    res.status(500).json(handleError('ERROR', sqlMessage, code));
+    return;
+  }  
+})
+
 // Obter um conteúdo por ID usuário
 contentRouter.get('/:userId', async (req, res) => {
   const { userId } = req.params

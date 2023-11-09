@@ -3,7 +3,7 @@ const extraDocsRouter = express.Router();
 const extraDocsController = require('../controllers/extraDocController');
 const { handleResponse, handleError } = require('../util/util');
 
-
+// Recuperar todos os extraDocs
 extraDocsRouter.get('/', async (req, res) => {
     try {
         const extraDocs = await extraDocsController.findAllExtraDocs();
@@ -17,6 +17,7 @@ extraDocsRouter.get('/', async (req, res) => {
     }
 })
 
+// Recuperar extra docs por conteúdo
 extraDocsRouter.get('/:id', async (req, res) => {
     const {id} = req.params;
 
@@ -32,6 +33,7 @@ extraDocsRouter.get('/:id', async (req, res) => {
     }
 });
 
+// Criar extra doc
 extraDocsRouter.post('/' , async (req, res) => {
     const {body} = req;
 
@@ -47,6 +49,7 @@ extraDocsRouter.post('/' , async (req, res) => {
     }
 });
 
+// Aprovar extra doc
 extraDocsRouter.put('/:id', async (req, res) => {
     const {id} = req.params;
 

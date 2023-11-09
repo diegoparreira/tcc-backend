@@ -1,10 +1,21 @@
 const { Comment } = require('../models/Comment');
+const { User } = require('../models/User');
+const { Answer } = require('../models/Answer');
 
+// All aproved comments
 const findAllCommentsForContent = async (contentId) => {
     return await Comment.findAll({
         where: {
-            ContentId: contentId
+            ContentId: contentId,
+            approved: 1
         },
+        include: [
+            {model: User},
+            {
+                model: Answer,
+                include: [User]
+            }
+        ],
         order: [['updatedAt', 'DESC']]
     });
 }

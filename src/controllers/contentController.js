@@ -1,8 +1,30 @@
 const { Content } = require('../models/Content');
+const { Category } = require('../models/Category');
 const userController = require('./userController');
 
 const findAllContents = async () => {
     return await Content.findAll();
+}
+
+const getContentGroupByCategories = async () => {
+    try {
+        const categoriesContents = await Category.findAll({
+            include: Content
+        });
+
+        const result = {}
+
+        categoriesContents.map(category => {
+            result[category.name] = category.Contents;
+        });
+
+        console.log(result);
+    
+        return result;
+    } catch (error) {
+        console.error('Error @ getContentGroupByCategories');
+        console.error(error);
+    }
 }
 
 const findContentByUserId = async (id) => {
@@ -46,5 +68,6 @@ module.exports = {
     findAllContents,
     findContentByUserId,
     createContent,
-    approveContent
+    approveContent,
+    getContentGroupByCategories
 }

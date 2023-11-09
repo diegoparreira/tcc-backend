@@ -1,14 +1,11 @@
+require('dotenv').config();
 const {Sequelize} = require('sequelize');
-const debug = require('debug')('app:database');
+const { DATABASE, USER, PASSWORD, HOST, DIALECT, DATABASE_PORT } = process.env; 
 
-const sequelize = new Sequelize('juntos', 'root', '1234', {
-    host: '127.0.0.1',
-    dialect: 'mariadb',
-    port: 3306,
-    dialectOptions: {
-        connectTimeout: 3000
-    },
-    logging: debug
+const sequelize = new Sequelize(DATABASE, USER, PASSWORD, {
+    host: HOST,
+    dialect: DIALECT,
+    port: DATABASE_PORT
 });
 
 module.exports = sequelize;

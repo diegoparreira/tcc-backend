@@ -19,13 +19,16 @@ userRouter.get('/', async (req, res) => {
 // Obter um usuário por email
 userRouter.get('/:email', async (req, res) => {
   const { email } = req.params;
+  console.log(email);
   try {
     const user = await userController.findUserByEmail(email);
-    if (!user) {
+    console.log(user);
+    if (user.length === 0) {
+      console.log('Não encontrou o usuário');
       res.status(404).json(handleResponse('NOT_FOUND'));
       return;
     }
-    res.status(200).json(user);
+    res.status(200).json(user[0]);
   } catch (error) {
     const { sqlMessage, code } = error.parent;
 
@@ -36,7 +39,9 @@ userRouter.get('/:email', async (req, res) => {
 
 // Criar um novo usuário
 userRouter.post('/', async (req, res) => {
+  console.log(req);
   const { body } = req;
+  console.log(body);
   const { email } = body;
 
   try {
@@ -55,14 +60,18 @@ userRouter.post('/', async (req, res) => {
     res.status(201).json(newUser);
 
   } catch (error) {
-
     const { sqlMessage, code } = error.parent;
+
+    console.log("Debug error return");
+    console.log(sqlMessage);
+    console.log(code);
 
     res.status(500).json(handleError('ERROR', sqlMessage, code));
     return;
   }
 });
 
+// Alterar senha do usuário
 userRouter.put('/password', async (req, res) => {
   const { body } = req;
   const { email, password } = body;
@@ -105,6 +114,7 @@ userRouter.put('/password', async (req, res) => {
   }
 });
 
+// Alterar email do usuário
 userRouter.put('/email', async (req, res) => {
   const { body } = req;
   const { email, newEmail } = body;
@@ -151,6 +161,7 @@ userRouter.put('/email', async (req, res) => {
   }
 });
 
+// Alterar username do usuário
 userRouter.put('/username', async (req, res) => {
   const { body } = req;
   const { username, newUsername } = body;
@@ -196,6 +207,7 @@ userRouter.put('/username', async (req, res) => {
   }
 });
 
+// Alterar tipo de usuário
 userRouter.post('/type', async (req, res) => {
   const { body } = req;
   const { email, type } = body;

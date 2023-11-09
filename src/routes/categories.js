@@ -3,7 +3,7 @@ const categoryRouter = express.Router();
 const categoryController = require('../controllers/categoryController');
 const { handleResponse, handleError } = require('../util/util');
 
-// List all categories
+// Listar todas as categorias
 categoryRouter.get('/', async (req, res) => {
     try {
         const categories = await categoryController.findAllCategory();
@@ -16,7 +16,7 @@ categoryRouter.get('/', async (req, res) => {
     }
 });
 
-// Create category
+// Criar categoria
 categoryRouter.post('/', async (req, res) => {
     const { body } = req;
 
@@ -33,7 +33,7 @@ categoryRouter.post('/', async (req, res) => {
     }
 });
 
-// Aprovar um conteúdo
+// Aprovar uma categoria
 categoryRouter.put('/:id', async (req, res) => {
     const { id } = req.params;
   

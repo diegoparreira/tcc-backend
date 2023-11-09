@@ -3,6 +3,7 @@ const commentRouter = express.Router();
 const commentController = require('../controllers/commentController');
 const { handleResponse, handleError } = require('../util/util');
 
+// Recuperar comentários de determinado conteúdo
 commentRouter.get('/:id', async (req, res) => {
     const {id} = req.params;
 
@@ -18,13 +19,14 @@ commentRouter.get('/:id', async (req, res) => {
     }
 });
 
+// Criar comentário
 commentRouter.post('/', async (req, res) => {
     const { body } = req;
 
     try {
         const newComment = await commentController.createComment(body);
 
-        res.status(200).json(newComment);
+        res.status(201).json(newComment);
     } catch (error) {
         const { sqlMessage, code } = error.parent;
 
@@ -33,6 +35,7 @@ commentRouter.post('/', async (req, res) => {
     }
 });
 
+// Excluir comentário
 commentRouter.delete('/:id', async (req, res) => {
     const { id } = req.params;
 
