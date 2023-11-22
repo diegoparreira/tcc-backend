@@ -1,4 +1,5 @@
 const { Answer } = require('../models/Answer');
+const { Op } = require("sequelize");
 
 const findAllAnswersForComment = async (commentId) => {
     return await Answer.findAll({
@@ -17,6 +18,31 @@ const createAnswer = async (body) => {
     });
 }
 
+const findAllAnswersUnaproved = async () => {
+    return await Answer.findAll({
+      where: {
+        approved: 0,
+      },
+      order: [["updatedAt", "DESC"]],
+    });
+  };
+
+const approveAnswerList = async (idList) => {
+    console.log(idList);
+    return await Answer.update(
+      {
+        approved: 1,
+      },
+      {
+        where: {
+          id: {
+            [Op.in]: idList,
+          },
+        },
+      }
+    );
+  };
+
 const removeAnswer = async (id) => {
     return await Answer.destroy({
         where: {
@@ -27,6 +53,8 @@ const removeAnswer = async (id) => {
 
 module.exports = {
     findAllAnswersForComment,
+    approveAnswerList,
+    findAllAnswersUnaproved,
     createAnswer,
     removeAnswer
 }

@@ -13,12 +13,11 @@ const categoryRouter = require('./src/routes/categories');
 const extraDocRouter = require('./src/routes/extraDocs');
 const commentRouter = require('./src/routes/comments');
 const answerRouter = require('./src/routes/answers');
+const chatRouter = require('./src/routes/chat');
 
 // Permitir a utilização de JSON nas requisições
 app.use(express.json());
-app.use(cors({
-  origin: 'http://localhost:3000',
-}));
+app.use(cors());
 
 // Defina as rotas principais do aplicativo
 app.use('/users', userRouter);
@@ -27,6 +26,7 @@ app.use('/categories', categoryRouter);
 app.use('/extradocs', extraDocRouter);
 app.use('/comments', commentRouter);
 app.use('/answers', answerRouter);
+app.use('/chat', chatRouter);
 
 // Outras configurações e middleware do Express
 

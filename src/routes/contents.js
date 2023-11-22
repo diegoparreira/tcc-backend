@@ -16,6 +16,19 @@ contentRouter.get('/', async (req, res) => {
   }
 });
 
+// Listar todos os conteúdos não aprovados
+contentRouter.get('/toapprove', async (req, res) => {
+  try{
+    const contents = await contentController.findAllUnaprovedContents();
+    res.status(200).json(contents);
+  }catch(error){
+    const { sqlMessage, code } = error.parent;
+
+    res.status(500).json(handleError('ERROR', sqlMessage, code));
+    return;
+  }
+});
+
 // Listar conteúdos por categoria
 contentRouter.get('/bycategories', async (req, res) => {
   try{
@@ -53,7 +66,7 @@ contentRouter.post('/', async (req, res) => {
     
     const newContent = await contentController.createContent(body);
     
-    res.status(200).json(newContent);
+    res.status(201).json(newContent);
   } catch (error) {
     const { sqlMessage, code } = error.parent;
 
@@ -62,14 +75,19 @@ contentRouter.post('/', async (req, res) => {
   }
 });
 
-// Aprovar um conteúdo
-contentRouter.put('/:id', async (req, res) => {
-  const { id } = req.params;
+// Aprovar uma lista de conteúdos
+contentRouter.post('/approve', async (req, res) => {
+  const { ids } = req.body;
 
   try{
-    const result = contentController.approveContent(id);
+    const result = await contentController.approveContentList(ids);
+    console.log(result);
 
-    res.status(200).json(handleResponse('SUCCESS'));
+    if(result[0] > 0){
+      res.status(200).json(handleResponse('SUCCESS'));
+    }else {
+      res.status(400).json(handleError('NOT_FOUND'));
+    }
   }catch(error){
     const { sqlMessage, code } = error.parent;
 

@@ -16,6 +16,19 @@ categoryRouter.get('/', async (req, res) => {
     }
 });
 
+// Listar todas as categorias para ativar
+categoryRouter.get('/toapprove', async (req, res) => {
+  try {
+      const categories = await categoryController.findAllCategoryToApprove();
+      res.status(200).json(categories);
+  } catch (error) {
+      const { sqlMessage, code } = error.parent;
+
+      res.status(500).json(handleError('ERROR', sqlMessage, code));
+      return;
+  }
+});
+
 // Criar categoria
 categoryRouter.post('/', async (req, res) => {
     const { body } = req;
@@ -24,7 +37,7 @@ categoryRouter.post('/', async (req, res) => {
       
       const newCategory = await categoryController.createCategory(body);
       
-      res.status(200).json(newCategory);
+      res.status(201).json(newCategory);
     } catch (error) {
       const { sqlMessage, code } = error.parent;
   
@@ -33,15 +46,17 @@ categoryRouter.post('/', async (req, res) => {
     }
 });
 
-// Aprovar uma categoria
-categoryRouter.put('/:id', async (req, res) => {
-    const { id } = req.params;
+// Aprovar uma lista de categorias
+categoryRouter.post('/approve', async (req, res) => {
+    const { ids } = req.body;
+    console.log(ids);
   
     try{
-      const result = await categoryController.approveCategory(id);
+      const result = await categoryController.approveCategoryList(ids);
       
       res.status(200).json(handleResponse('SUCCESS'));
     }catch(error){
+      console.error(error);
       const { sqlMessage, code } = error.parent;
   
       res.status(500).json(handleError('ERROR', sqlMessage, code));

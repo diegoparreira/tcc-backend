@@ -16,6 +16,19 @@ userRouter.get('/', async (req, res) => {
   }
 });
 
+// Listar todos os usuários querendo ser mentor
+userRouter.get('/toapprove', async (req, res) => {
+  try {
+    const users = await userController.findAllUsersWithMentorFlag();
+    res.status(200).json(users);
+  } catch (error) {
+    const { sqlMessage, code } = error.parent;
+
+    res.status(500).json(handleError('ERROR', sqlMessage, code));
+    return;
+  }
+});
+
 // Obter um usuário por email
 userRouter.get('/:email', async (req, res) => {
   const { email } = req.params;
@@ -42,6 +55,8 @@ userRouter.post('/', async (req, res) => {
   console.log(req);
   const { body } = req;
   console.log(body);
+  console.log('Valor recebido body.avatar: ');
+  console.log(body.avatar);
   const { email } = body;
 
   try {
@@ -60,6 +75,7 @@ userRouter.post('/', async (req, res) => {
     res.status(201).json(newUser);
 
   } catch (error) {
+    console.log(error);
     const { sqlMessage, code } = error.parent;
 
     console.log("Debug error return");
@@ -72,7 +88,7 @@ userRouter.post('/', async (req, res) => {
 });
 
 // Alterar senha do usuário
-userRouter.put('/password', async (req, res) => {
+userRouter.post('/password', async (req, res) => {
   const { body } = req;
   const { email, password } = body;
 
@@ -252,5 +268,45 @@ userRouter.post('/type', async (req, res) => {
   }
 
 });
+
+// Solicitar para ser mentor
+userRouter.post('/mentor', async (req, res) => {
+  const { body } = req;
+  const { id } = body;
+
+  try{
+    const result = await userController.updateUserMentorFlag(id);
+  
+    if(result){
+      res.status(201).json(handleResponse('SUCCESS'));
+      return;
+    }
+  }catch(error){
+    const { sqlMessage, code } = error.parent;
+
+    res.status(500).json(handleError('ERROR', sqlMessage, code));
+    return;
+  }
+});
+
+userRouter.post('/approve', async (req, res) => {
+  const { body } = req;
+  const { ids } = body;
+
+  try{
+    const result = await userController.approveMentorUser(ids);
+  
+    if(result){
+      res.status(200).json(handleResponse('SUCCESS'));
+      return;
+    }
+  }catch(error){
+    const { sqlMessage, code } = error.parent;
+
+    res.status(500).json(handleError('ERROR', sqlMessage, code));
+    return;
+  }
+})
+
 
 module.exports = userRouter;

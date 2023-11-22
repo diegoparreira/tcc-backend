@@ -65,6 +65,14 @@ const User = sequelize.define('User', {
   type: {
     type: DataTypes.ENUM('admin', 'mentor', 'student'),
     defaultValue: 'student'
+  },
+  mentor_flag: {
+    type: DataTypes.TINYINT(1),
+    defaultValue: 0
+  },
+  avatar: {
+    type: DataTypes.STRING(2048),
+    defaultValue: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Windows_10_Default_Profile_Picture.svg/2048px-Windows_10_Default_Profile_Picture.svg.png'
   }
 }, {
   hooks: {
