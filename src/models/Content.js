@@ -1,8 +1,6 @@
 const { Sequelize, DataTypes } = require('sequelize');
 const sequelize = require('../../config/database');
 
-const _CONTENT = require('../../data/content.json');
-
 const Content = sequelize.define('Content', {
   title: {
     type: DataTypes.STRING,
@@ -27,15 +25,5 @@ const Content = sequelize.define('Content', {
   }
 });
 
-const createContentData = async () => {
-  await Content.bulkCreate(_CONTENT)
-  .then(users => {
-    console.log('Successful created data');
-    console.log(users);
-  })
-  .catch(error => {
-    console.log('Error when creating data: ' + error);
-  });
-}
 
-module.exports = { Content, createContentData };
+module.exports = { Content };

@@ -6,8 +6,6 @@ const { Comment } = require('./Comment');
 const { Answer } = require('./Answer');
 const { Category } = require('./Category');
 
-const _USERS = require('../../data/users.json');
-
 const User = sequelize.define('User', {
   fullName: {
     type: DataTypes.STRING,
@@ -99,32 +97,21 @@ User.hasMany(Comment, {onDelete: 'cascade'});
 User.hasMany(Answer, {onDelete: 'cascade'});
 User.hasMany(Category, {onDelete: 'cascade'});
 
-Content.belongsTo(User);
-Content.belongsTo(Category);
+Content.belongsTo(User, {foreignKey: {allowNull: false}});
+Content.belongsTo(Category, {foreignKey: {allowNull: false}});
 Content.hasMany(Comment, {onDelete: 'cascade'});
 Content.hasMany(ExtraDoc, {onDelete: 'cascade'});
 
-ExtraDoc.belongsTo(User);
+ExtraDoc.belongsTo(User, {foreignKey: {allowNull: false}});
 
-Comment.belongsTo(User);
-Comment.belongsTo(Content);
+Comment.belongsTo(User, {foreignKey: {allowNull: false}});
+Comment.belongsTo(Content, {foreignKey: {allowNull: false}});
 Comment.hasMany(Answer, {onDelete: 'cascade'});
 
-Answer.belongsTo(User);
-Answer.belongsTo(Comment);
+Answer.belongsTo(User, {foreignKey: {allowNull: false}});
+Answer.belongsTo(Comment, {foreignKey: {allowNull: false}});
 
-Category.belongsTo(User);
+Category.belongsTo(User, {foreignKey: {allowNull: false}});
 Category.hasMany(Content, {onDelete: 'cascade'});
 
-const createUserData = async () => {
-  await User.bulkCreate(_USERS)
-  .then(users => {
-    console.log('Successful created data');
-    console.log(users);
-  })
-  .catch(error => {
-    console.log('Error when creating data: ' + error);
-  });
-}
-
-module.exports = {User, createUserData};
+module.exports = {User};

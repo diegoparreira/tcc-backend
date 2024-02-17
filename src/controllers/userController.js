@@ -94,6 +94,15 @@ const updateUserType = async (user, type) => {
     return await user.save();
 }
 
+const updateUserAvatar = async (user, newAvatar) => {
+
+    user.set({
+        avatar: newAvatar
+    });
+
+    return await user.save();
+}
+
 const updateUserMentorFlag = async (id) => {
     return await User.update(
         {
@@ -134,6 +143,7 @@ module.exports = {
     updateUserEmail,
     updateUserUsername,
     updateUserType,
+    updateUserAvatar,
     updateUserMentorFlag,
     approveMentorUser
 };

@@ -62,7 +62,7 @@ answerRouter.post('/', async (req, res) => {
     try {
         const newComment = await answerController.createAnswer(body);
 
-        res.status(200).json(newComment);
+        res.status(201).json(newComment);
     } catch (error) {
         const { sqlMessage, code } = error.parent;
 

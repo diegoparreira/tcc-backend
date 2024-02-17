@@ -223,6 +223,30 @@ userRouter.put('/username', async (req, res) => {
   }
 });
 
+// Alterar username do usuário
+userRouter.post('/avatar', async (req, res) => {
+  const { id, avatar } = req.body;
+
+  try {
+    const user = await userController.findUserById(id);
+    console.log(user);
+
+    const result = await userController.updateUserAvatar(user, avatar);
+        
+    if(result) {
+      res.status(200).json(handleResponse('SUCCESS'));
+      return;
+    }
+
+  } catch (error) {
+    console.log(error);
+    const { sqlMessage, code } = error.parent;
+
+    res.status(500).json(handleError('ERROR', sqlMessage, code));
+    return;
+  }
+});
+
 // Alterar tipo de usuário
 userRouter.post('/type', async (req, res) => {
   const { body } = req;

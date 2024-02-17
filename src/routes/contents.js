@@ -68,6 +68,9 @@ contentRouter.post('/', async (req, res) => {
     
     res.status(201).json(newContent);
   } catch (error) {
+    console.log('Debug do erro');
+    console.log(error);
+
     const { sqlMessage, code } = error.parent;
 
     res.status(500).json(handleError('ERROR', sqlMessage, code));
