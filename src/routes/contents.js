@@ -3,7 +3,23 @@ const contentRouter = express.Router();
 const contentController = require('../controllers/contentController'); 
 const { handleResponse, handleError } = require('../util/util');
 
-// Listar todos os conteúdos
+/**
+ * @swagger
+ * tags:
+ *   name: Contents
+ *   description: API para gerenciar conteúdos
+ */
+
+/**
+ * @swagger
+ * /:
+ *   get:
+ *     summary: Listar todos os conteúdos
+ *     tags: [Contents]
+ *     responses:
+ *       200:
+ *         description: Lista de todos os conteúdos
+ */
 contentRouter.get('/', async (req, res) => {
   try{
     const contents = await contentController.findAllContents();
@@ -16,7 +32,16 @@ contentRouter.get('/', async (req, res) => {
   }
 });
 
-// Listar todos os conteúdos não aprovados
+/**
+ * @swagger
+ * /toapprove:
+ *   get:
+ *     summary: Listar todos os conteúdos não aprovados
+ *     tags: [Contents]
+ *     responses:
+ *       200:
+ *         description: Lista de todos os conteúdos não aprovados
+ */
 contentRouter.get('/toapprove', async (req, res) => {
   try{
     const contents = await contentController.findAllUnaprovedContents();
@@ -29,7 +54,16 @@ contentRouter.get('/toapprove', async (req, res) => {
   }
 });
 
-// Listar conteúdos por categoria
+/**
+ * @swagger
+ * /bycategories:
+ *   get:
+ *     summary: Listar conteúdos por categoria
+ *     tags: [Contents]
+ *     responses:
+ *       200:
+ *         description: Lista de conteúdos agrupados por categoria
+ */
 contentRouter.get('/bycategories', async (req, res) => {
   try{
     const contents = await contentController.getContentGroupByCategories();
@@ -42,7 +76,22 @@ contentRouter.get('/bycategories', async (req, res) => {
   }  
 })
 
-// Obter um conteúdo por ID usuário
+/**
+ * @swagger
+ * /{userId}:
+ *   get:
+ *     summary: Obter um conteúdo por ID usuário
+ *     tags: [Contents]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Conteúdo do usuário especificado
+ */
 contentRouter.get('/:userId', async (req, res) => {
   const { userId } = req.params
   try {
@@ -58,7 +107,35 @@ contentRouter.get('/:userId', async (req, res) => {
   }
 });
 
-// Criar um novo conteúdo
+/**
+ * @swagger
+ * /:
+ *   post:
+ *     summary: Criar um novo conteúdo
+ *     tags: [Contents]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               url:
+ *                 type: string
+ *               type:
+ *                 type: string
+ *               userId:
+ *                 type: integer
+ *               categoryId:
+ *                 type: integer
+ *     responses:
+ *       201:
+ *         description: Conteúdo criado
+ */
 contentRouter.post('/', async (req, res) => {
   const { body } = req;
 
@@ -78,7 +155,29 @@ contentRouter.post('/', async (req, res) => {
   }
 });
 
-// Aprovar uma lista de conteúdos
+/**
+ * @swagger
+ * /approve:
+ *   post:
+ *     summary: Aprovar uma lista de conteúdos
+ *     tags: [Contents]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               ids:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *     responses:
+ *       200:
+ *         description: Conteúdos aprovados
+ *       400:
+ *         description: Conteúdos não encontrados
+ */
 contentRouter.post('/approve', async (req, res) => {
   const { ids } = req.body;
 

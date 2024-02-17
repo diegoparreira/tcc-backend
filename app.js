@@ -5,6 +5,28 @@ const sequelize = require('./config/database');
 const swaggerJsDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 
+// Get info of the server
+const os = require('os');
+const networkInterfaces = os.networkInterfaces();
+// get local network address
+const network = networkInterfaces['Wi-Fi'].find(network => network.family === 'IPv4');
+
+const port = process.env.PORT || 3003;
+const serverString = `http://${network.address}:${port}`;
+
+// Swagger setup
+const swaggerOptions = {
+  swaggerDefinition: {
+    info: {
+      title: 'Juntos Backend API',
+      version: '1.0.0',
+      description: 'API documentation for the Juntos Backend app'
+    },
+    servers: [serverString]
+  },
+  apis: ['./src/routes/*.js']
+};
+
 // Import CRUD classes for tables here
 const userRouter = require('./src/routes/users');
 const contentRouter = require('./src/routes/contents');
@@ -27,19 +49,6 @@ app.use('/comments', commentRouter);
 app.use('/answers', answerRouter);
 app.use('/chat', chatRouter);
 
-// Swagger setup
-const swaggerOptions = {
-  swaggerDefinition: {
-    info: {
-      title: 'Library API',
-      version: '1.0.0',
-      description: 'API documentation for the Library app'
-    },
-    servers: ['http://localhost:3003']
-  },
-  apis: ['./src/routes/*.js']
-};
-
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
@@ -54,8 +63,6 @@ const init = async () => {
       .sync()
       .then(() => {
         // Initialize the server
-        const port = process.env.PORT || 3003;
-
         app.listen(port, () => {
           console.log(`Running server at port: ${port}`);
         });
