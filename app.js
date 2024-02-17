@@ -2,11 +2,10 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const sequelize = require('./config/database');
+const swaggerJsDoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
 
-const { createUserData } = require('./src/models/User');
-const { createContentData } = require('./src/models/Content');
-
-// Importe as classes CRUD para as tabelas aqui
+// Import CRUD classes for tables here
 const userRouter = require('./src/routes/users');
 const contentRouter = require('./src/routes/contents');
 const categoryRouter = require('./src/routes/categories');
@@ -15,11 +14,11 @@ const commentRouter = require('./src/routes/comments');
 const answerRouter = require('./src/routes/answers');
 const chatRouter = require('./src/routes/chat');
 
-// Permitir a utilização de JSON nas requisições
+// Allow the use of JSON in requests
 app.use(express.json());
 app.use(cors());
 
-// Defina as rotas principais do aplicativo
+// Define the main routes of the application
 app.use('/users', userRouter);
 app.use('/contents', contentRouter);
 app.use('/categories', categoryRouter);
@@ -28,30 +27,42 @@ app.use('/comments', commentRouter);
 app.use('/answers', answerRouter);
 app.use('/chat', chatRouter);
 
-// Outras configurações e middleware do Express
+// Swagger setup
+const swaggerOptions = {
+  swaggerDefinition: {
+    info: {
+      title: 'Library API',
+      version: '1.0.0',
+      description: 'API documentation for the Library app'
+    },
+    servers: ['http://localhost:3003']
+  },
+  apis: ['./src/routes/*.js']
+};
 
-// Inicializar o banco de dados
+const swaggerDocs = swaggerJsDoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+
+// Other Express settings and middleware
+
+// Initialize the database
 const init = async () => {
   try {
-    await sequelize.authenticate(); // Verifique a conexão com o banco de dados
+    await sequelize.authenticate(); // Verify connection to the database
 
     await sequelize
-      // .sync({ force: true })
       .sync()
       .then(() => {
-        // Inicialize o servidor
+        // Initialize the server
         const port = process.env.PORT || 3003;
 
         app.listen(port, () => {
           console.log(`Running server at port: ${port}`);
         });
       })
-      .catch(err => console.log('Error: ' + err));
-
-      // await createUserData();
-      // await createContentData();
+      .catch(err => console.error('Error: ', err));
   } catch (error) {
-    console.log('Unable to connect to the database, error: ' + error);
+    console.error('Unable to connect to the database, error: ', error);
   }
 }
 
