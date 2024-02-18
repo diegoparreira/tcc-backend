@@ -5,6 +5,9 @@ const sequelize = require('./config/database');
 const swaggerJsDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 
+// Import models and associations
+require('./src/models/associations');
+
 // Get info of the server
 const os = require('os');
 const networkInterfaces = os.networkInterfaces();

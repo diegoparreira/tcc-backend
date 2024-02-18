@@ -19,4 +19,4 @@ const ExtraDoc = sequelize.define('ExtraDoc', {
     }
 });
 
-module.exports = { ExtraDoc };
+module.exports = ExtraDoc;

@@ -1,12 +1,10 @@
+// Importing necessary dependencies
 const { DataTypes } = require('sequelize');
 const sequelize = require('../../config/database');
-const { Content } = require('./Content');
-const { ExtraDoc } = require('./ExtraDoc');
-const { Comment } = require('./Comment');
-const { Answer } = require('./Answer');
-const { Category } = require('./Category');
 
+// Defining the User model
 const User = sequelize.define('User', {
+  // Defining the model fields
   fullName: {
     type: DataTypes.STRING,
   },
@@ -16,7 +14,7 @@ const User = sequelize.define('User', {
     validate: {
       len: {
         args: [3, 30],
-        msg: "Error: Name must has 3 charactes and maximun 100."
+        msg: "O nome deve ter entre 3 e 30 caracteres."
       }
     }
   },
@@ -26,7 +24,7 @@ const User = sequelize.define('User', {
     validate: {
       len: {
         args: [3, 30],
-        msg: "Error: Name must has 3 charactes and maximun 100."
+        msg: "O sobrenome deve ter entre 3 e 30 caracteres."
       }
     }
   },
@@ -37,7 +35,7 @@ const User = sequelize.define('User', {
     validate: {
       isEmail: {
         args: true,
-        msg: "Error: enter a valid email."
+        msg: "Insira um email válido."
       }
     }
   },
@@ -56,7 +54,7 @@ const User = sequelize.define('User', {
     validate: {
       isDate: {
         args: true,
-        msg: "Error: enter a valid date."
+        msg: "Insira uma data válida."
       }
     }
   },
@@ -73,45 +71,20 @@ const User = sequelize.define('User', {
     defaultValue: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Windows_10_Default_Profile_Picture.svg/2048px-Windows_10_Default_Profile_Picture.svg.png'
   }
 }, {
+  // Defining the model hooks
   hooks: {
     beforeCreate: (user) => {
-      console.log('Entrou no hook do create');
-      console.log(user.firstName);
-      console.log(user.lastName);
+      // Concatenating first name and last name to create full name
       user.fullName = `${user.firstName} ${user.lastName}`;
     },
     beforeBulkCreate: (users) => {
-      console.log('Entrou no hook do create');
       users.map(user => {
-        console.log(user.firstName);
-        console.log(user.lastName);
+        // Concatenating first name and last name to create full name for each user
         user.fullName = `${user.firstName} ${user.lastName}`;
       })
     }
   }
 });
 
-User.hasMany(Content, {onDelete: 'cascade'});
-User.hasMany(ExtraDoc, {onDelete: 'cascade'});
-User.hasMany(Comment, {onDelete: 'cascade'});
-User.hasMany(Answer, {onDelete: 'cascade'});
-User.hasMany(Category, {onDelete: 'cascade'});
-
-Content.belongsTo(User, {foreignKey: {allowNull: false}});
-Content.belongsTo(Category, {foreignKey: {allowNull: false}});
-Content.hasMany(Comment, {onDelete: 'cascade'});
-Content.hasMany(ExtraDoc, {onDelete: 'cascade'});
-
-ExtraDoc.belongsTo(User, {foreignKey: {allowNull: false}});
-
-Comment.belongsTo(User, {foreignKey: {allowNull: false}});
-Comment.belongsTo(Content, {foreignKey: {allowNull: false}});
-Comment.hasMany(Answer, {onDelete: 'cascade'});
-
-Answer.belongsTo(User, {foreignKey: {allowNull: false}});
-Answer.belongsTo(Comment, {foreignKey: {allowNull: false}});
-
-Category.belongsTo(User, {foreignKey: {allowNull: false}});
-Category.hasMany(Content, {onDelete: 'cascade'});
-
-module.exports = {User};
+// Exporting the User model
+module.exports = User;

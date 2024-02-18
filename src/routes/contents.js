@@ -1,7 +1,18 @@
-const express = require('express');
+const express = require("express");
 const contentRouter = express.Router();
-const contentController = require('../controllers/contentController'); 
-const { handleResponse, handleError } = require('../util/util');
+const contentController = require("../controllers/contentController");
+const { handleResponse, handleError } = require("../util/util");
+
+// Middleware para verificar se o conteúdo existe
+async function checkContentExists(req, res, next) {
+  const { id } = req.params;
+  const existingContent = await Content.findById(id);
+  if (!existingContent) {
+    return res.status(404).json({ error: "Content not found" });
+  }
+  req.content = existingContent; // Armazena o conteúdo na solicitação para uso posterior
+  next();
+}
 
 /**
  * @swagger
@@ -12,51 +23,55 @@ const { handleResponse, handleError } = require('../util/util');
 
 /**
  * @swagger
- * /:
+ * /contents/:
  *   get:
  *     summary: Listar todos os conteúdos
  *     tags: [Contents]
  *     responses:
  *       200:
  *         description: Lista de todos os conteúdos
+ *       500:
+ *         description: Erro interno do servidor
  */
-contentRouter.get('/', async (req, res) => {
-  try{
-    const contents = await contentController.findAllContents();
+contentRouter.get("/", async (req, res) => {
+  try {
+    const contents = await contentController.getAllContents();
     res.status(200).json(contents);
-  }catch(error){
+  } catch (error) {
     const { sqlMessage, code } = error.parent;
 
-    res.status(500).json(handleError('ERROR', sqlMessage, code));
+    res.status(500).json(handleError("ERROR", sqlMessage, code));
     return;
   }
 });
 
 /**
  * @swagger
- * /toapprove:
+ * /contents/toapprove:
  *   get:
- *     summary: Listar todos os conteúdos não aprovados
+ *     summary: Listar todos os conteúdos para aprovação
  *     tags: [Contents]
  *     responses:
  *       200:
- *         description: Lista de todos os conteúdos não aprovados
+ *         description: Lista de todos os conteúdos para aprovação
+ *       500:
+ *         description: Erro interno do servidor
  */
-contentRouter.get('/toapprove', async (req, res) => {
-  try{
-    const contents = await contentController.findAllUnaprovedContents();
+contentRouter.get("/toapprove", async (req, res) => {
+  try {
+    const contents = await contentController.getAllUnaprovedContents();
     res.status(200).json(contents);
-  }catch(error){
+  } catch (error) {
     const { sqlMessage, code } = error.parent;
 
-    res.status(500).json(handleError('ERROR', sqlMessage, code));
+    res.status(500).json(handleError("ERROR", sqlMessage, code));
     return;
   }
 });
 
 /**
  * @swagger
- * /bycategories:
+ * /contents/bycategories:
  *   get:
  *     summary: Listar conteúdos por categoria
  *     tags: [Contents]
@@ -64,21 +79,21 @@ contentRouter.get('/toapprove', async (req, res) => {
  *       200:
  *         description: Lista de conteúdos agrupados por categoria
  */
-contentRouter.get('/bycategories', async (req, res) => {
-  try{
+contentRouter.get("/bycategories", async (req, res) => {
+  try {
     const contents = await contentController.getContentGroupByCategories();
     res.status(200).json(contents);
-  }catch(error){
+  } catch (error) {
     const { sqlMessage, code } = error.parent;
 
-    res.status(500).json(handleError('ERROR', sqlMessage, code));
+    res.status(500).json(handleError("ERROR", sqlMessage, code));
     return;
-  }  
-})
+  }
+});
 
 /**
  * @swagger
- * /{userId}:
+ * /contents/{userId}:
  *   get:
  *     summary: Obter um conteúdo por ID usuário
  *     tags: [Contents]
@@ -92,24 +107,23 @@ contentRouter.get('/bycategories', async (req, res) => {
  *       200:
  *         description: Conteúdo do usuário especificado
  */
-contentRouter.get('/:userId', async (req, res) => {
-  const { userId } = req.params
+contentRouter.get("/:userId", async (req, res) => {
+  const { userId } = req.params;
   try {
     const contents = await contentController.findContentByUser(userId);
 
     res.status(200).json(contents);
   } catch (error) {
-
     const { sqlMessage, code } = error.parent;
 
-    res.status(500).json(handleError('ERROR', sqlMessage, code));
+    res.status(500).json(handleError("ERROR", sqlMessage, code));
     return;
   }
 });
 
 /**
  * @swagger
- * /:
+ * /contents/:
  *   post:
  *     summary: Criar um novo conteúdo
  *     tags: [Contents]
@@ -136,28 +150,27 @@ contentRouter.get('/:userId', async (req, res) => {
  *       201:
  *         description: Conteúdo criado
  */
-contentRouter.post('/', async (req, res) => {
+contentRouter.post("/", async (req, res) => {
   const { body } = req;
 
   try {
-    
     const newContent = await contentController.createContent(body);
-    
+
     res.status(201).json(newContent);
   } catch (error) {
-    console.log('Debug do erro');
+    console.log("Debug do erro");
     console.log(error);
 
     const { sqlMessage, code } = error.parent;
 
-    res.status(500).json(handleError('ERROR', sqlMessage, code));
+    res.status(500).json(handleError("ERROR", sqlMessage, code));
     return;
   }
 });
 
 /**
  * @swagger
- * /approve:
+ * /contents/approve:
  *   post:
  *     summary: Aprovar uma lista de conteúdos
  *     tags: [Contents]
@@ -178,34 +191,100 @@ contentRouter.post('/', async (req, res) => {
  *       400:
  *         description: Conteúdos não encontrados
  */
-contentRouter.post('/approve', async (req, res) => {
+contentRouter.post("/approve", async (req, res) => {
   const { ids } = req.body;
 
-  try{
+  try {
     const result = await contentController.approveContentList(ids);
     console.log(result);
 
-    if(result[0] > 0){
-      res.status(200).json(handleResponse('SUCCESS'));
-    }else {
-      res.status(400).json(handleError('NOT_FOUND'));
+    if (result[0] > 0) {
+      res.status(200).json(handleResponse("SUCCESS"));
+    } else {
+      res.status(400).json(handleError("NOT_FOUND"));
     }
-  }catch(error){
+  } catch (error) {
     const { sqlMessage, code } = error.parent;
 
-    res.status(500).json(handleError('ERROR', sqlMessage, code));
+    res.status(500).json(handleError("ERROR", sqlMessage, code));
     return;
   }
-})
-
-// Atualizar um conteúdo por ID
-contentRouter.put('/:id', async (req, res) => {
-  // Implemente a atualização de conteúdo aqui
 });
 
-// Deletar um conteúdo por ID
-contentRouter.delete('/:id', async (req, res) => {
-  // Implemente a exclusão de conteúdo aqui
+/**
+ * @swagger
+ * /contents/{id}:
+ *   put:
+ *     summary: Alterar um conteúdo
+ *     tags: [Contents]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: integer
+ *               description:
+ *                type: string
+ *     responses:
+ *       200:
+ *         description: Conteúdos aprovados
+ *       400:
+ *         description: Conteúdos não encontrados
+ */
+
+// Atualizar um conteúdo por ID
+contentRouter.put("/:id", checkContentExists, async (req, res) => {
+  const { body } = req;
+
+  try {
+    // Atualize o conteúdo com o corpo da solicitação
+    for (let key in body) {
+      req.content[key] = body[key];
+    }
+
+    // Salve as alterações no banco de dados
+    const updatedContent = await req.content.save();
+
+    res.status(200).json(updatedContent);
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+/**
+ * @swagger
+ * /contents/{id}:
+ *   delete:
+ *     summary: Deletar um conteúdo por ID
+ *     tags: [Contents]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID do conteúdo a ser deletado
+ *     responses:
+ *       200:
+ *         description: Conteúdo deletado com sucesso
+ *       404:
+ *         description: Conteúdo não encontrado
+ *       500:
+ *         description: Erro interno do servidor
+ */
+
+contentRouter.delete("/:id", checkContentExists, async (req, res) => {
+  try {
+    // Deleta o conteúdo do banco de dados
+    await req.content.remove();
+
+    res.status(200).json({ message: "Content deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
 module.exports = contentRouter;

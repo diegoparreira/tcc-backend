@@ -3,13 +3,13 @@ const { Category } = require("../models/Category");
 const userController = require("./userController");
 const { Op } = require("sequelize");
 
-const findAllContents = async () => {
+const getAllContents = async () => {
   return await Content.findAll({
     attributes: ["title", "description", "url", "type"],
   });
 };
 
-const findAllUnaprovedContents = async () => {
+const getAllUnaprovedContents = async () => {
   return await Content.findAll({
     attributes: ["title", "description", "url", "type", "id"],
     where: {
@@ -44,7 +44,7 @@ const getContentGroupByCategories = async () => {
   }
 };
 
-const findContentByUserId = async (id) => {
+const getContentByUserId = async (id) => {
   const user = await userController.findUserById(id);
 
   if (!user[0]) {
@@ -88,9 +88,9 @@ const approveContentList = async (idList) => {
 };
 
 module.exports = {
-  findAllContents,
-  findAllUnaprovedContents,
-  findContentByUserId,
+  getAllContents,
+  getAllUnaprovedContents,
+  getContentByUserId,
   createContent,
   approveContentList,
   getContentGroupByCategories,
