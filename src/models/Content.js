@@ -66,4 +66,4 @@ const Content = sequelize.define("Content", {
 });
 
 // Exporting the Content model and the content types
-module.exports = { Content, CONTENT_TYPES };
+module.exports = Content, { CONTENT_TYPES };

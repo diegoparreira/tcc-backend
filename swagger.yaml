@@ -1,0 +1,240 @@
+info:
+  title: Juntos Backend API
+  version: 1.0.0
+  description: API documentation for the Juntos Backend app
+servers:
+  - http://192.168.1.103:3003
+swagger: '2.0'
+paths:
+  /answer/toapprove:
+    get:
+      summary: Recuperar respostas não aprovadas
+      tags:
+        - Answers
+      responses:
+        '200':
+          description: Uma lista de respostas não aprovadas
+        '404':
+          description: Nenhuma resposta não aprovada encontrada
+        '500':
+          description: Erro do servidor
+  /answer/approve:
+    put:
+      summary: Aprovar uma lista de respostas
+      tags:
+        - Answers
+      parameters:
+        - in: body
+          name: ids
+          required: true
+          schema:
+            type: array
+            items:
+              type: integer
+      responses:
+        '200':
+          description: Sucesso
+        '404':
+          description: Não encontrado
+        '500':
+          description: Erro do servidor
+  /answer/{id}:
+    get:
+      summary: Recuperar as respostas de um post
+      tags:
+        - Answers
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Uma lista de respostas para o post
+        '404':
+          description: Post não encontrado
+        '500':
+          description: Erro do servidor
+    delete:
+      summary: Excluir uma resposta
+      tags:
+        - Answers
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Sucesso
+        '404':
+          description: Não encontrado
+        '500':
+          description: Erro do servidor
+  /answer/:
+    post:
+      summary: Criar uma resposta
+      tags:
+        - Answers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                  description: O conteúdo da resposta
+                UserId:
+                  type: integer
+                  description: O ID do usuário
+                CommentId:
+                  type: integer
+                  description: O ID do comentário
+      responses:
+        '201':
+          description: A resposta criada
+        '400':
+          description: Dados inválidos
+        '500':
+          description: Erro do servidor
+  /contents/:
+    get:
+      summary: Listar todos os conteúdos
+      tags:
+        - Contents
+      responses:
+        '200':
+          description: Lista de todos os conteúdos
+        '500':
+          description: Erro interno do servidor
+    post:
+      summary: Criar um novo conteúdo
+      tags:
+        - Contents
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                url:
+                  type: string
+                type:
+                  type: string
+                userId:
+                  type: integer
+                categoryId:
+                  type: integer
+      responses:
+        '201':
+          description: Conteúdo criado
+  /contents/toapprove:
+    get:
+      summary: Listar todos os conteúdos para aprovação
+      tags:
+        - Contents
+      responses:
+        '200':
+          description: Lista de todos os conteúdos para aprovação
+        '500':
+          description: Erro interno do servidor
+  /contents/bycategories:
+    get:
+      summary: Listar conteúdos por categoria
+      tags:
+        - Contents
+      responses:
+        '200':
+          description: Lista de conteúdos agrupados por categoria
+  /contents/{userId}:
+    get:
+      summary: Obter um conteúdo por ID usuário
+      tags:
+        - Contents
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Conteúdo do usuário especificado
+  /contents/approve:
+    post:
+      summary: Aprovar uma lista de conteúdos
+      tags:
+        - Contents
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: integer
+      responses:
+        '200':
+          description: Conteúdos aprovados
+        '400':
+          description: Conteúdos não encontrados
+  /contents/{id}:
+    put:
+      summary: Alterar um conteúdo
+      tags:
+        - Contents
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+                description:
+                  type: string
+      responses:
+        '200':
+          description: Conteúdos aprovados
+        '400':
+          description: Conteúdos não encontrados
+    delete:
+      summary: Deletar um conteúdo por ID
+      tags:
+        - Contents
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: ID do conteúdo a ser deletado
+      responses:
+        '200':
+          description: Conteúdo deletado com sucesso
+        '404':
+          description: Conteúdo não encontrado
+        '500':
+          description: Erro interno do servidor
+definitions: {}
+responses: {}
+parameters: {}
+securityDefinitions: {}
+tags:
+  - name: Answers
+    description: API para gerenciar respostas
+  - name: Contents
+    description: API para gerenciar conteúdos

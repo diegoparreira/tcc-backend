@@ -4,6 +4,8 @@ const cors = require('cors');
 const sequelize = require('./config/database');
 const swaggerJsDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
+const yaml = require('js-yaml');
+const fs = require('fs');
 
 // Import models and associations
 require('./src/models/associations');
@@ -54,6 +56,11 @@ app.use('/chat', chatRouter);
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+
+// Create swagger file
+if(!fs.existsSync('./swagger.yaml')){
+  fs.writeFileSync('./swagger.yaml', yaml.dump(swaggerDocs), 'utf8');
+}
 
 // Other Express settings and middleware
 
