@@ -2,7 +2,7 @@ const { Answer } = require("../models/index");
 const { Op, ValidationError } = require("sequelize");
 
 // Fetch all answers for a given comment
-const findAllAnswersForComment = async (commentId) => {
+const getAllAnswersForComment = async (commentId) => {
   try {
     const answers = await Answer.findAll({
       where: {
@@ -49,7 +49,7 @@ const createAnswer = async (body) => {
 };
 
 // Fetch all unapproved answers
-const findAllUnapprovedAnswers = async () => {
+const getAllUnapprovedAnswers = async () => {
   try {
     const answers = await Answer.findAll({
       where: {
@@ -57,11 +57,6 @@ const findAllUnapprovedAnswers = async () => {
       },
       order: [["updatedAt", "DESC"]],
     });
-
-    // If there are no unapproved answers, throw an error
-    if (!answers.length) {
-      throw new Error("Nenhuma resposta não aprovada encontrada.");
-    }
 
     return answers;
   } catch (error) {
@@ -120,9 +115,9 @@ const removeAnswer = async (id) => {
 };
 
 module.exports = {
-  findAllAnswersForComment,
+  getAllAnswersForComment,
   approveAnswerList,
-  findAllUnapprovedAnswers,
+  getAllUnapprovedAnswers,
   createAnswer,
   removeAnswer,
 };

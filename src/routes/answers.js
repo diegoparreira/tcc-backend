@@ -1,26 +1,7 @@
 const express = require("express");
 const answerRouter = express.Router();
 const answerController = require("../controllers/answerController");
-const { ValidationError } = require("sequelize");
-
-// Middleware para lidar com erros
-const errorHandler = async (req, res, next) => {
-  try {
-    await next();
-  } catch (error) {
-    if (error instanceof ValidationError) {
-      // Lidar com erro de validação aqui
-      const messages = error.errors.map((e) => e.message);
-      res.status(400).json({ status: "Erro de validação", messages });
-    } else {
-      // Lidar com erro genérico aqui
-      const message = error.message;
-      res.status(500).json({ status: "Erro", message });
-    }
-  }
-};
-
-answerRouter.use(errorHandler);
+const { sendResponse } = require("../util/util");
 
 /**
  * @swagger
@@ -31,7 +12,7 @@ answerRouter.use(errorHandler);
 
 /**
  * @swagger
- * /answer/toapprove:
+ * /answers/toapprove:
  *   get:
  *     summary: Recuperar respostas não aprovadas
  *     tags: [Answers]
@@ -45,22 +26,20 @@ answerRouter.use(errorHandler);
  */
 answerRouter.get("/toapprove", async (req, res) => {
   try {
-    const answersUnaproved = await answerController.findAllUnapprovedAnswers();
+    const answersUnaproved = await answerController.getAllUnapprovedAnswers();
     if (answersUnaproved.length > 0) {
-      res.status(200).json(answersUnaproved);
+      sendResponse(res, "Respostas a serem aprovadas", answersUnaproved, "GET");
     } else {
-      res
-        .status(404)
-        .json({ message: "Nenhuma resposta não aprovada encontrada" });
+      sendResponse(res, "Respostas a serem aprovadas", null, "NOT_FOUND");
     }
   } catch (error) {
-    res.status(500).json({ message: "Erro do servidor", error: error.message });
+    sendResponse(res, "Respostas", error.message, "SERVER_ERROR");
   }
 });
 
 /**
  * @swagger
- * /answer/approve:
+ * /answers/approve:
  *   put:
  *     summary: Aprovar uma lista de respostas
  *     tags: [Answers]
@@ -85,23 +64,20 @@ answerRouter.put("/approve", async (req, res) => {
   try {
     const result = await answerController.approveAnswerList(ids);
     if (result > 0) {
-      res.status(200).json({ status: "Sucesso" });
+      sendResponse(res, "Resposta(s)", null, "APPROVE");
     } else {
-      res.status(404).json({
-        status: "Erro",
-        message: "Nenhuma resposta encontrada para aprovar.",
-      });
+      sendResponse(res, "Resposta(s)", null, "NOT_FOUND");
     }
   } catch (error) {
-    res.status(500).json({ message: "Erro do servidor", error: error.message });
+    sendResponse(res, "Resposta(s)", error.message, "SERVER_ERROR");
   }
 });
 
 /**
  * @swagger
- * /answer/{id}:
+ * /answers/{id}:
  *   get:
- *     summary: Recuperar as respostas de um post
+ *     summary: Recuperar as respostas de um comentário
  *     tags: [Answers]
  *     parameters:
  *       - in: path
@@ -111,7 +87,7 @@ answerRouter.put("/approve", async (req, res) => {
  *           type: integer
  *     responses:
  *       200:
- *         description: Uma lista de respostas para o post
+ *         description: Uma lista de respostas para o comentário
  *       404:
  *         description: Post não encontrado
  *       500:
@@ -120,41 +96,43 @@ answerRouter.put("/approve", async (req, res) => {
 answerRouter.get("/:id", async (req, res) => {
   const { id } = req.params;
   try {
-    const answersForContent = await answerController.findAllAnswersForComment(
+    const answersForContent = await answerController.getAllAnswersForComment(
       id
     );
     if (answersForContent.length > 0) {
-      res.status(200).json(answersForContent);
+      sendResponse(res, "Respostas para o comentário com id: " + id, answersForContent, "GET");
     } else {
-      res.status(404).json({ message: "Post não encontrado" });
+      sendResponse(res, "Respostas para o comentário com id: " + id, null, "NOT_FOUND");
     }
   } catch (error) {
-    res.status(500).json({ message: "Erro do servidor", error: error.message });
+    sendResponse(res, "Respostas", error.message, "SERVER_ERROR");
   }
 });
 
 /**
  * @swagger
- * /answer/:
+ * /answers/:
  *   post:
  *     summary: Criar uma resposta
  *     tags: [Answers]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               content:
- *                 type: string
- *                 description: O conteúdo da resposta
- *               UserId:
- *                 type: integer
- *                 description: O ID do usuário
- *               CommentId:
- *                 type: integer
- *                 description: O ID do comentário
+ *     consumes:
+ *       - application/json
+ *     parameters:
+ *       - in: body
+ *         name: body
+ *         required: true
+ *         schema:
+ *           type: object
+ *           properties:
+ *             content:
+ *               type: string
+ *               description: O conteúdo da resposta
+ *             UserId:
+ *               type: integer
+ *               description: O ID do usuário
+ *             CommentId:
+ *               type: integer
+ *               description: O ID do comentário
  *     responses:
  *       201:
  *         description: A resposta criada
@@ -168,18 +146,18 @@ answerRouter.post("/", async (req, res) => {
   try {
     const newAnswer = await answerController.createAnswer(body);
     if (newAnswer) {
-      res.status(201).json(newAnswer);
+      sendResponse(res, "Resposta", newAnswer, "POST");
     } else {
-      res.status(400).json({ message: "Dados inválidos" });
+      sendResponse(res, "Resposta", null, "BAD_REQUEST");
     }
   } catch (error) {
-    res.status(500).json({ message: "Erro do servidor", error: error.message });
+    sendResponse(res, "Resposta", error.message, "SERVER_ERROR");
   }
 });
 
 /**
  * @swagger
- * /answer/{id}:
+ * /answers/{id}:
  *   delete:
  *     summary: Excluir uma resposta
  *     tags: [Answers]
@@ -202,15 +180,12 @@ answerRouter.delete("/:id", async (req, res) => {
   try {
     const result = await answerController.removeAnswer(id);
     if (result == 1) {
-      res.status(200).json({ status: "Sucesso" });
+      sendResponse(res, "Resposta", null, "DELETE");
     } else {
-      res.status(404).json({
-        status: "Erro",
-        message: "Nenhuma resposta encontrada para remover.",
-      });
+      sendResponse(res, "Resposta", null, "NOT_FOUND");
     }
   } catch (error) {
-    res.status(500).json({ message: "Erro do servidor", error: error.message });
+    sendResponse(res, "Resposta", error.message, "SERVER_ERROR");
   }
 });
 

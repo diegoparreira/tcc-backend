@@ -1,5 +1,5 @@
 const bcrypt = require('bcrypt');
-const { User } = require('../models/User');
+const { User } = require('../models/index');
 const { Op } = require("sequelize");
 
 
@@ -8,7 +8,12 @@ const hashPassword = async (password) =>{
 }
 
 const findUserById = async (id) => {
-    return await User.findByPk(id);
+    try {
+        return await User.findByPk(id);
+    } catch (error) {
+        console.error(`Erro ao buscar usuário por id: ${id}: ${error.message}`);
+        throw error;
+    }
 }
 
 const findAllUsers = async () => {

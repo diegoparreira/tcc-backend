@@ -1,14 +1,14 @@
 const express = require("express");
 const contentRouter = express.Router();
 const contentController = require("../controllers/contentController");
-const { handleResponse, handleError } = require("../util/util");
+const { sendResponse } = require("../util/util");
 
 // Middleware para verificar se o conteúdo existe
 async function checkContentExists(req, res, next) {
   const { id } = req.params;
-  const existingContent = await Content.findById(id);
+  const existingContent = await contentController.getContentById(id);
   if (!existingContent) {
-    return res.status(404).json({ error: "Content not found" });
+    return sendResponse(res, "Conteúdos", null, "NOT_FOUND");
   }
   req.content = existingContent; // Armazena o conteúdo na solicitação para uso posterior
   next();
@@ -30,18 +30,21 @@ async function checkContentExists(req, res, next) {
  *     responses:
  *       200:
  *         description: Lista de todos os conteúdos
+ *       404:
+ *         description: Nenhum conteúdo encontrado
  *       500:
  *         description: Erro interno do servidor
  */
 contentRouter.get("/", async (req, res) => {
   try {
     const contents = await contentController.getAllContents();
-    res.status(200).json(contents);
+    if(contents.length > 0){
+      sendResponse(res, "Conteúdos", contents, "GET");
+    } else {
+      sendResponse(res, "Conteúdos", null, "NOT_FOUND");
+    }
   } catch (error) {
-    const { sqlMessage, code } = error.parent;
-
-    res.status(500).json(handleError("ERROR", sqlMessage, code));
-    return;
+    sendResponse(res, "Conteúdos", error.message, "SERVER_ERROR");
   }
 });
 
@@ -54,18 +57,21 @@ contentRouter.get("/", async (req, res) => {
  *     responses:
  *       200:
  *         description: Lista de todos os conteúdos para aprovação
+ *       404:
+ *         description: Nenhum conteúdo para aprovação encontrado
  *       500:
  *         description: Erro interno do servidor
  */
 contentRouter.get("/toapprove", async (req, res) => {
   try {
     const contents = await contentController.getAllUnaprovedContents();
-    res.status(200).json(contents);
+    if(contents.length > 0){
+      sendResponse(res, "Conteúdo para aprovação", contents, "GET");
+    }else {
+      sendResponse(res, "Conteúdo para aprovação", null, "NOT_FOUND");
+    }
   } catch (error) {
-    const { sqlMessage, code } = error.parent;
-
-    res.status(500).json(handleError("ERROR", sqlMessage, code));
-    return;
+    sendResponse(res, "Conteúdo", error.message, "SERVER_ERROR");
   }
 });
 
@@ -78,16 +84,24 @@ contentRouter.get("/toapprove", async (req, res) => {
  *     responses:
  *       200:
  *         description: Lista de conteúdos agrupados por categoria
+ *       404:
+ *         description: Nenhum conteúdo por categoria encontrado
+ *       500:
+ *         description: Erro interno do servidor
  */
 contentRouter.get("/bycategories", async (req, res) => {
   try {
     const contents = await contentController.getContentGroupByCategories();
-    res.status(200).json(contents);
+    
+    // Check if there are contents
+    if (contents && Object.keys(contents).length > 0) {
+      sendResponse(res, "Conteúdo por categoria", contents, "GET");
+    } else {
+      sendResponse(res, "Conteúdo por categoria", null, "NOT_FOUND");
+    }
+    
   } catch (error) {
-    const { sqlMessage, code } = error.parent;
-
-    res.status(500).json(handleError("ERROR", sqlMessage, code));
-    return;
+    sendResponse(res, "Conteúdo por categoria", error.message, "SERVER_ERROR");
   }
 });
 
@@ -95,29 +109,35 @@ contentRouter.get("/bycategories", async (req, res) => {
  * @swagger
  * /contents/{userId}:
  *   get:
- *     summary: Obter um conteúdo por ID usuário
+ *     summary: Obter todos os conteúdos de um usuário específico pelo ID do usuário
  *     tags: [Contents]
  *     parameters:
  *       - in: path
  *         name: userId
  *         required: true
+ *         description: ID do usuário para recuperar seus conteúdos
  *         schema:
  *           type: integer
  *     responses:
  *       200:
- *         description: Conteúdo do usuário especificado
+ *         description: Conteúdos do usuário especificado foram recuperados com sucesso
+ *       404:
+ *         description: Nenhum conteúdo encontrado para este usuário
+ *       500:
+ *         description: Erro interno do servidor
  */
 contentRouter.get("/:userId", async (req, res) => {
   const { userId } = req.params;
   try {
-    const contents = await contentController.findContentByUser(userId);
+    const contents = await contentController.getContentByUserId(userId);
 
-    res.status(200).json(contents);
+    if(contents.length > 0){
+      sendResponse(res, "Conteúdo para o usuário com id: " + userId, contents, "GET");
+    }else {
+      sendResponse(res, "Conteúdo para o usuário com id: " + userId, null, "NOT_FOUND");
+    }
   } catch (error) {
-    const { sqlMessage, code } = error.parent;
-
-    res.status(500).json(handleError("ERROR", sqlMessage, code));
-    return;
+    sendResponse(res, "Conteúdo para o usuário com id: " + userId, error.message, "SERVER_ERROR");
   }
 });
 
@@ -127,87 +147,92 @@ contentRouter.get("/:userId", async (req, res) => {
  *   post:
  *     summary: Criar um novo conteúdo
  *     tags: [Contents]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               title:
- *                 type: string
- *               description:
- *                 type: string
- *               url:
- *                 type: string
- *               type:
- *                 type: string
- *               userId:
- *                 type: integer
- *               categoryId:
- *                 type: integer
+ *     consumes:
+ *       - application/json
+ *     parameters:
+ *       - in: body
+ *         name: body
+ *         description: Conteúdo a ser criado
+ *         required: true
+ *         schema:
+ *           type: object
+ *           properties:
+ *             title:
+ *               type: string
+ *             description:
+ *               type: string
+ *             url:
+ *               type: string
+ *             type:
+ *               type: string
+ *             userId:
+ *               type: integer
+ *             categoryId:
+ *               type: integer
  *     responses:
  *       201:
  *         description: Conteúdo criado
+ *       400:
+ *         description: Erro ao criar conteúdo
+ *       500:
+ *         description: Erro interno do servidor
  */
 contentRouter.post("/", async (req, res) => {
   const { body } = req;
 
   try {
     const newContent = await contentController.createContent(body);
-
-    res.status(201).json(newContent);
+    if(newContent){
+      sendResponse(res, "Conteúdo", newContent, "CREATE");
+    }else {
+      sendResponse(res, "bad_request", "Conteúdo", null, "BAD_REQUEST");
+    }
   } catch (error) {
-    console.log("Debug do erro");
-    console.log(error);
-
-    const { sqlMessage, code } = error.parent;
-
-    res.status(500).json(handleError("ERROR", sqlMessage, code));
-    return;
+    sendResponse(res, "Conteúdo", error.message, "SERVER_ERROR");
   }
 });
 
 /**
  * @swagger
  * /contents/approve:
- *   post:
+ *   put:
  *     summary: Aprovar uma lista de conteúdos
  *     tags: [Contents]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               ids:
- *                 type: array
- *                 items:
- *                   type: integer
+ *     consumes:
+ *       - application/json
+ *     parameters:
+ *       - in: body
+ *         name: body
+ *         description: IDs dos conteúdos a serem aprovados
+ *         required: true
+ *         schema:
+ *           type: object
+ *           properties:
+ *             ids:
+ *               type: array
+ *               items:
+ *                 type: integer
  *     responses:
- *       200:
+ *       204:
  *         description: Conteúdos aprovados
  *       400:
  *         description: Conteúdos não encontrados
+ *       500:
+ *         description: Erro interno do servidor
  */
-contentRouter.post("/approve", async (req, res) => {
+contentRouter.put("/approve", async (req, res) => {
   const { ids } = req.body;
 
   try {
-    const result = await contentController.approveContentList(ids);
-    console.log(result);
+    const affectedCount = await contentController.approveContentList(ids);
 
-    if (result[0] > 0) {
-      res.status(200).json(handleResponse("SUCCESS"));
+    if (affectedCount > 0) {
+      sendResponse(res, "Conteúdo(s)", null, "APPROVE");
     } else {
-      res.status(400).json(handleError("NOT_FOUND"));
+      sendResponse(res, "Conteúdo(s)", null, "NOT_FOUND");
     }
   } catch (error) {
-    const { sqlMessage, code } = error.parent;
-
-    res.status(500).json(handleError("ERROR", sqlMessage, code));
-    return;
+    sendResponse(res, "Conteúdo(s)", error.message, "SERVER_ERROR");
   }
 });
 
@@ -217,40 +242,47 @@ contentRouter.post("/approve", async (req, res) => {
  *   put:
  *     summary: Alterar um conteúdo
  *     tags: [Contents]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               id:
- *                 type: integer
- *               description:
- *                type: string
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         type: integer
+ *         description: The content ID.
+ *       - in: body
+ *         name: body
+ *         required: true
+ *         schema:
+ *           type: object
+ *           properties:
+ *             description:
+ *               type: string
  *     responses:
  *       200:
- *         description: Conteúdos aprovados
+ *         description: Conteúdo alterado
  *       400:
- *         description: Conteúdos não encontrados
+ *         description: Conteúdo não encontrado
+ *       500:
+ *         description: Erro interno do servidor
  */
 
-// Atualizar um conteúdo por ID
+// Update content by ID
 contentRouter.put("/:id", checkContentExists, async (req, res) => {
   const { body } = req;
 
   try {
-    // Atualize o conteúdo com o corpo da solicitação
+    // Update content with new values
     for (let key in body) {
       req.content[key] = body[key];
     }
+    // Return contet to be aprroved
+    req.content["approved"] = 0;
 
-    // Salve as alterações no banco de dados
+    // Save changes in database
     const updatedContent = await req.content.save();
 
-    res.status(200).json(updatedContent);
+    sendResponse(res, "Conteúdo", updatedContent, "CHANGE");
   } catch (error) {
-    res.status(500).json({ error: "Internal server error" });
+    sendResponse(res, "Conteúdo", error.message, "SERVER_ERROR");
   }
 });
 
@@ -278,12 +310,14 @@ contentRouter.put("/:id", checkContentExists, async (req, res) => {
 
 contentRouter.delete("/:id", checkContentExists, async (req, res) => {
   try {
-    // Deleta o conteúdo do banco de dados
-    await req.content.remove();
+    // Remove content from database
+    const {content} = req;
 
-    res.status(200).json({ message: "Content deleted successfully" });
+    const result = await content.destroy();
+
+    sendResponse(res, "Conteúdo", result, "DELETE");
   } catch (error) {
-    res.status(500).json({ error: "Internal server error" });
+    sendResponse(res, "Conteúdo", error.message, "SERVER_ERROR");
   }
 });
 
