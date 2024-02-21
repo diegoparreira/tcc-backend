@@ -39,7 +39,6 @@ const categoryRouter = require('./src/routes/categories');
 const extraDocRouter = require('./src/routes/extraDocs');
 const commentRouter = require('./src/routes/comments');
 const answerRouter = require('./src/routes/answers');
-const chatRouter = require('./src/routes/chat');
 
 // Allow the use of JSON in requests
 app.use(express.json());
@@ -52,7 +51,6 @@ app.use('/categories', categoryRouter);
 app.use('/extradocs', extraDocRouter);
 app.use('/comments', commentRouter);
 app.use('/answers', answerRouter);
-app.use('/chat', chatRouter);
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
