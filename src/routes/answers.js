@@ -146,7 +146,7 @@ answerRouter.post("/", async (req, res) => {
   try {
     const newAnswer = await answerController.createAnswer(body);
     if (newAnswer) {
-      sendResponse(res, "Resposta", newAnswer, "POST");
+      sendResponse(res, "Resposta", newAnswer, "CREATE");
     } else {
       sendResponse(res, "Resposta", null, "BAD_REQUEST");
     }

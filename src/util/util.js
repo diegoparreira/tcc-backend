@@ -14,11 +14,21 @@ function sendResponse(res, resource, data = null, operation) {
   let isServerError     = operation === 'SERVER_ERROR';
   let key               = !isServerError ? 'data' : 'errors';
   let message           = !isServerError ? `${resource} ${stringComplement}`: OPERATIONS[operation].message;
+  let errors;
+
+  console.log("Teste");
+  console.log(data);
+
+  try {
+    errors = JSON.parse(data);
+  } catch (error) {
+    errors = data;
+  }
 
   res.status(httpStatus).json({
     message: message,
     data: !isServerError ? data : null,
-    errors: isServerError ? JSON.parse(data) : null
+    errors: isServerError ? errors : null
   });
 }
 
