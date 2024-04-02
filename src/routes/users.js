@@ -1,147 +1,250 @@
 const express = require('express');
 const userRouter = express.Router();
 const userController = require('../controllers/userController');
-const { handleResponse, handleError } = require('../util/util');
+const { sendResponse } = require('../util/util');
 
-// Listar todos os usuários
+/**
+ * @swagger
+ * tags:
+ *   name: Users
+ *   description: API para gerenciar usuários
+ */
+
+/**
+ * @swagger
+ * /users:
+ *   get:
+ *     summary: Recuperar todos os usuários
+ *     tags: [Users]
+ *     responses:
+ *       200:
+ *         description: Uma lista de usuários
+ *       500:
+ *         description: Erro do servidor
+ */
 userRouter.get('/', async (req, res) => {
   try {
     const users = await userController.findAllUsers();
-    res.status(200).json(users);
+    sendResponse(res, "Usuários", users, "GET");
   } catch (error) {
-    const { sqlMessage, code } = error.parent;
-
-    res.status(500).json(handleError('ERROR', sqlMessage, code));
-    return;
+    sendResponse(res, "Usuários", error.message, "SERVER_ERROR");
   }
 });
 
-// Listar todos os usuários querendo ser mentor
+/**
+ * @swagger
+ * /users/toapprove:
+ *   get:
+ *     summary: Recuperar todos os usuários querendo ser mentor
+ *     tags: [Users]
+ *     responses:
+ *       200:
+ *         description: Uma lista de usuários
+ *       500:
+ *         description: Erro do servidor
+ */
 userRouter.get('/toapprove', async (req, res) => {
   try {
     const users = await userController.findAllUsersWithMentorFlag();
-    res.status(200).json(users);
+    sendResponse(res, "Usuários", users, "GET");
   } catch (error) {
-    const { sqlMessage, code } = error.parent;
-
-    res.status(500).json(handleError('ERROR', sqlMessage, code));
-    return;
+    sendResponse(res, "Usuários", error.message, "SERVER_ERROR");
   }
 });
 
-// Obter um usuário por email
+/**
+ * @swagger
+ * /users/{email}:
+ *   get:
+ *     summary: Recuperar um usuário por email
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: email
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: O usuário recuperado
+ *       404:
+ *         description: Usuário não encontrado
+ *       500:
+ *         description: Erro do servidor
+ */
 userRouter.get('/:email', async (req, res) => {
   const { email } = req.params;
-  console.log(email);
   try {
     const user = await userController.findUserByEmail(email);
-    console.log(user);
     if (user.length === 0) {
-      console.log('Não encontrou o usuário');
-      res.status(404).json(handleResponse('NOT_FOUND'));
+      sendResponse(res, "User", null, "NOT_FOUND");
       return;
     }
-    res.status(200).json(user[0]);
+    sendResponse(res, "User", user[0], "GET");
   } catch (error) {
-    const { sqlMessage, code } = error.parent;
-
-    res.status(500).json(handleError('ERROR', sqlMessage, code));
-    return;
+    sendResponse(res, "User", error.message, "SERVER_ERROR");
   }
 });
 
-// Criar um novo usuário
+/**
+ * @swagger
+ * /users:
+ *   post:
+ *     summary: Criar um novo usuário
+ *     tags: [Users]
+ *     consumes:
+ *       - application/json
+ *     parameters:
+ *       - in: body
+ *         name: body
+ *         required: true
+ *         schema:
+ *           type: object
+ *           properties:
+ *             email:
+ *               type: string
+ *               description: O email do usuário
+ *             firstName:
+ *               type: string
+ *               description: O primeiro nome do usuário
+ *             lastName:
+ *               type: string
+ *               description: O sobrenome do usuário
+ *             username:
+ *               type: string
+ *               description: O nome de usuário
+ *             password:
+ *               type: string
+ *               description: A senha do usuário
+ *             birthdate:
+ *               type: string
+ *               format: date
+ *               description: A data de nascimento do usuário
+ *             avatar_url:
+ *               type: string
+ *               description: A URL do avatar do usuário
+ *     responses:
+ *       201:
+ *         description: O usuário criado
+ *       400:
+ *         description: Usuário já existe
+ *       500:
+ *         description: Erro do servidor
+ */
 userRouter.post('/', async (req, res) => {
-  console.log(req);
   const { body } = req;
-  console.log(body);
-  console.log('Valor recebido body.avatar: ');
-  console.log(body.avatar);
   const { email } = body;
 
   try {
-    // Verifica se o usuário já existe
     const user = await userController.findUserByEmail(email);
 
-    console.log(user);
-
     if(user.length !== 0){
-      res.status(400).json(handleResponse('EXISTENT_USER'));
+      sendResponse(res, "User", null, "EXISTENT_USER");
       return;
     }
 
     const newUser = await userController.createUser(body);
 
-    res.status(201).json(newUser);
+    sendResponse(res, "User", newUser, "CREATE");
 
   } catch (error) {
-    console.log(error);
-    const { sqlMessage, code } = error.parent;
-
-    console.log("Debug error return");
-    console.log(sqlMessage);
-    console.log(code);
-
-    res.status(500).json(handleError('ERROR', sqlMessage, code));
-    return;
+    sendResponse(res, "User", error.message, "SERVER_ERROR");
   }
 });
 
-// Alterar senha do usuário
+/**
+ * @swagger
+ * /users/password:
+ *   post:
+ *     summary: Alterar senha do usuário
+ *     tags: [Users]
+ *     consumes:
+ *       - application/json
+ *     parameters:
+ *       - in: body
+ *         name: body
+ *         required: true
+ *         schema:
+ *           type: object
+ *           properties:
+ *             email:
+ *               type: string
+ *               description: O email do usuário
+ *             password:
+ *               type: string
+ *               description: A nova senha do usuário
+ *     responses:
+ *       200:
+ *         description: Sucesso
+ *       400:
+ *         description: Email ou senha faltando
+ *       500:
+ *         description: Erro do servidor
+ */
 userRouter.post('/password', async (req, res) => {
   const { body } = req;
   const { email, password } = body;
 
-  if(!password){
-    res.status(400).json(handleResponse('MISSNG_PASSWORD'));
-    return;
-  }
-
-  if(!email){
-    res.status(400).json(handleResponse('MISSNG_EMAIL'));
+  if(!password || !email){
+    sendResponse(res, "User", null, "MISSING_FIELDS");
     return;
   }
 
   try {
     const user = await userController.findUserByEmail(email);
 
-    console.log('Usuário encontrado: ' + user[0]);
-
     if(user.length === 0){
-      res.status(400).json(handleResponse('NOT_FOUND'));
+      sendResponse(res, "User", null, "NOT_FOUND");
       return;
     }
 
     const result = await userController.updateUserPassword(user[0], password);
-
-    console.log('result');
-    console.log(result);
         
     if(result) {
-      res.status(200).json(handleResponse('SUCCESS'));
+      sendResponse(res, "User", null, "UPDATE");
       return;
     }
 
   } catch (error) {
-    const { sqlMessage, code } = error.parent;
-
-    res.status(500).json(handleError('ERROR', sqlMessage, code));
-    return;
+    sendResponse(res, "User", error.message, "SERVER_ERROR");
   }
 });
 
-// Alterar email do usuário
+/**
+ * @swagger
+ * /users/email:
+ *   put:
+ *     summary: Alterar email do usuário
+ *     tags: [Users]
+ *     consumes:
+ *       - application/json
+ *     parameters:
+ *       - in: body
+ *         name: body
+ *         required: true
+ *         schema:
+ *           type: object
+ *           properties:
+ *             email:
+ *               type: string
+ *               description: O email atual do usuário
+ *             newEmail:
+ *               type: string
+ *               description: O novo email do usuário
+ *     responses:
+ *       200:
+ *         description: Sucesso
+ *       400:
+ *         description: Email faltando ou já existente
+ *       500:
+ *         description: Erro do servidor
+ */
 userRouter.put('/email', async (req, res) => {
   const { body } = req;
   const { email, newEmail } = body;
 
-  if(!newEmail){
-    res.status(400).json(handleResponse('MISSING_EMAIL'));
-    return;
-  }
-
-  if(!email){
-    res.status(400).json(handleResponse('MISSING_EMAIL'));
+  if(!newEmail || !email){
+    sendResponse(res, "User", null, "MISSING_FIELDS");
     return;
   }
 
@@ -149,46 +252,58 @@ userRouter.put('/email', async (req, res) => {
     const user = await userController.findUserByEmail(email);
     const anotherUserWithNewEmail = await userController.findUserByEmail(newEmail);
 
-    // Check if has some user with the current email
-    if(user.length === 0){
-      res.status(400).json(handleResponse('NOT_FOUND'));
-      return;
-    }
-
-    // Check if has some user with the new email
-    if(anotherUserWithNewEmail.length !== 0) {
-      res.status(400).json(handleResponse('EXISTENT_USER'));
+    if(user.length === 0 || anotherUserWithNewEmail.length !== 0){
+      sendResponse(res, "User", null, "EXISTENT_USER");
       return;
     }
 
     const result = await userController.updateUserEmail(user[0], newEmail);
 
-       
     if(result) {
-      res.status(200).json(handleResponse('SUCCESS'));
+      sendResponse(res, "User", null, "UPDATE");
       return;
     }
 
   } catch (error) {
-    const { sqlMessage, code } = error.parent;
-
-    res.status(500).json(handleError('ERROR', sqlMessage, code));
-    return;
+    sendResponse(res, "User", error.message, "SERVER_ERROR");
   }
 });
 
-// Alterar username do usuário
+/**
+ * @swagger
+ * /users/username:
+ *   put:
+ *     summary: Alterar username do usuário
+ *     tags: [Users]
+ *     consumes:
+ *       - application/json
+ *     parameters:
+ *       - in: body
+ *         name: body
+ *         required: true
+ *         schema:
+ *           type: object
+ *           properties:
+ *             username:
+ *               type: string
+ *               description: O username atual do usuário
+ *             newUsername:
+ *               type: string
+ *               description: O novo username do usuário
+ *     responses:
+ *       200:
+ *         description: Sucesso
+ *       400:
+ *         description: Username faltando ou já existente
+ *       500:
+ *         description: Erro do servidor
+ */
 userRouter.put('/username', async (req, res) => {
   const { body } = req;
   const { username, newUsername } = body;
 
-  if(!newUsername){
-    res.status(400).json(handleResponse('MISSING_USERNAME'));
-    return;
-  }
-
-  if(!username){
-    res.status(400).json(handleResponse('MISSING_USERNAME'));
+  if(!newUsername || !username){
+    sendResponse(res, "User", null, "MISSING_FIELDS");
     return;
   }
 
@@ -196,104 +311,151 @@ userRouter.put('/username', async (req, res) => {
     const user = await userController.findUserByUsername(username);
     const anotherUserWithNewUsername = await userController.findUserByUsername(newUsername);
 
-    // Check if has some user with the current email
-    if(user.length === 0){
-      res.status(400).json(handleResponse('NOT_FOUND'));
+    if(user.length === 0 || anotherUserWithNewUsername.length !== 0){
+      sendResponse(res, "User", null, "EXISTENT_USER");
       return;
     }
 
-    // Check if has some user with the new email
-    if(anotherUserWithNewUsername.length !== 0) {
-      res.status(400).json(handleResponse('EXISTENT_USER'));
-     return;
-    }
-
     const result = await userController.updateUserUsername(user[0], newUsername);
-        
+
     if(result) {
-      res.status(200).json(handleResponse('SUCCESS'));
+      sendResponse(res, "User", null, "UPDATE");
       return;
     }
 
   } catch (error) {
-    const { sqlMessage, code } = error.parent;
-
-    res.status(500).json(handleError('ERROR', sqlMessage, code));
-    return;
+    sendResponse(res, "User", error.message, "SERVER_ERROR");
   }
 });
 
-// Alterar username do usuário
+/**
+ * @swagger
+ * /users/avatar:
+ *   post:
+ *     summary: Alterar avatar do usuário
+ *     tags: [Users]
+ *     consumes:
+ *       - application/json
+ *     parameters:
+ *       - in: body
+ *         name: body
+ *         required: true
+ *         schema:
+ *           type: object
+ *           properties:
+ *             id:
+ *               type: string
+ *               description: O id do usuário
+ *             avatar:
+ *               type: string
+ *               description: O novo avatar do usuário
+ *     responses:
+ *       200:
+ *         description: Sucesso
+ *       500:
+ *         description: Erro do servidor
+ */
 userRouter.post('/avatar', async (req, res) => {
   const { id, avatar } = req.body;
 
   try {
     const user = await userController.findUserById(id);
-    console.log(user);
 
     const result = await userController.updateUserAvatar(user, avatar);
-        
+
     if(result) {
-      res.status(200).json(handleResponse('SUCCESS'));
+      sendResponse(res, "User", null, "UPDATE");
       return;
     }
 
   } catch (error) {
-    console.log(error);
-    const { sqlMessage, code } = error.parent;
-
-    res.status(500).json(handleError('ERROR', sqlMessage, code));
-    return;
+    sendResponse(res, "User", error.message, "SERVER_ERROR");
   }
 });
 
-// Alterar tipo de usuário
+/**
+ * @swagger
+ * /users/type:
+ *   post:
+ *     summary: Alterar tipo de usuário
+ *     tags: [Users]
+ *     consumes:
+ *       - application/json
+ *     parameters:
+ *       - in: body
+ *         name: body
+ *         required: true
+ *         schema:
+ *           type: object
+ *           properties:
+ *             email:
+ *               type: string
+ *               description: O email do usuário
+ *             type:
+ *               type: string
+ *               description: O novo tipo do usuário
+ *     responses:
+ *       200:
+ *         description: Sucesso
+ *       400:
+ *         description: Email ou tipo faltando
+ *       500:
+ *         description: Erro do servidor
+ */
 userRouter.post('/type', async (req, res) => {
   const { body } = req;
   const { email, type } = body;
 
   const possibleTypes = ['admin', 'mentor', 'student'];
 
-  try{
-    if(!email){
-      res.status(400).json(handleResponse('MISSING_EMAIL'))
-      return;
-    }
-  
-    if(!type){
-      res.status(400).json(handleResponse('MISSING_TYPE'));
-      return;
-    }
-  
-    if(!possibleTypes.includes(type)){
-      res.status(400).json(handleResponse('ENUM_ERROR'));
-      return;
-    }
-  
-    const user = await userController.findUserByEmail(email);
-    console.log(user);
-  
-    if(!user[0]){
-      res.status(400).json(handleResponse('NOT_FOUND'));
-      return;
-    }
-  
-    const result = await userController.updateUserType(user[0], type);
-  
-    if(result){
-      res.status(200).json(handleResponse('SUCCESS'));
-      return;
-    }
-  }catch(error){
-    const { sqlMessage, code } = error.parent;
-
-    res.status(500).json(handleError('ERROR', sqlMessage, code));
+  if(!email || !type || !possibleTypes.includes(type)){
+    sendResponse(res, "User", null, "MISSING_FIELDS");
     return;
   }
 
+  try {
+    const user = await userController.findUserByEmail(email);
+
+    if(!user[0]){
+      sendResponse(res, "User", null, "NOT_FOUND");
+      return;
+    }
+
+    const result = await userController.updateUserType(user[0], type);
+
+    if(result){
+      sendResponse(res, "User", null, "UPDATE");
+      return;
+    }
+  }catch(error){
+    sendResponse(res, "User", error.message, "SERVER_ERROR");
+  }
 });
 
-// Solicitar para ser mentor
+/**
+ * @swagger
+ * /users/mentor:
+ *   post:
+ *     summary: Solicitar para ser mentor
+ *     tags: [Users]
+ *     consumes:
+ *       - application/json
+ *     parameters:
+ *       - in: body
+ *         name: body
+ *         required: true
+ *         schema:
+ *           type: object
+ *           properties:
+ *             id:
+ *               type: string
+ *               description: O id do usuário
+ *     responses:
+ *       201:
+ *         description: Sucesso
+ *       500:
+ *         description: Erro do servidor
+ */
 userRouter.post('/mentor', async (req, res) => {
   const { body } = req;
   const { id } = body;
@@ -313,6 +475,32 @@ userRouter.post('/mentor', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /users/approve:
+ *   post:
+ *     summary: Aprovar usuário como mentor
+ *     tags: [Users]
+ *     consumes:
+ *       - application/json
+ *     parameters:
+ *       - in: body
+ *         name: body
+ *         required: true
+ *         schema:
+ *           type: object
+ *           properties:
+ *             ids:
+ *               type: array
+ *               items:
+ *                 type: string
+ *               description: Os ids dos usuários
+ *     responses:
+ *       200:
+ *         description: Sucesso
+ *       500:
+ *         description: Erro do servidor
+ */
 userRouter.post('/approve', async (req, res) => {
   const { body } = req;
   const { ids } = body;
@@ -331,6 +519,5 @@ userRouter.post('/approve', async (req, res) => {
     return;
   }
 })
-
 
 module.exports = userRouter;
