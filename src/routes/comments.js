@@ -54,7 +54,7 @@ commentRouter.get('/toapprove', async (req, res) => {
  *         description: Erro do servidor
  */
 commentRouter.post('/approve', async (req, res) => {
-    const { ids } = req.body;
+    const ids = req.body;
   
     try{
       const result = await commentController.approveCommentList(ids);

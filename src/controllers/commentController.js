@@ -1,6 +1,4 @@
-const { Comment } = require("../models/Comment");
-const { User } = require("../models/User");
-const { Answer } = require("../models/Answer");
+const { Comment, User, Answer } = require("../models/index");
 const { Op } = require("sequelize");
 
 // All unaproved comments
